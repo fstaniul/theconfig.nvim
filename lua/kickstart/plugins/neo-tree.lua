@@ -24,6 +24,17 @@ return {
           ['\\'] = 'close_window',
         },
       },
+      filtered_items = {
+        visible = true,
+        children_inherit_highlights = true,
+        hide_dotfiles = false,
+        hide_gitignored = false,
+        -- remains hidden even if visible is toggled to true, this overrides always_show
+        never_show = {
+          '.DS_Store',
+          'thumbs.db',
+        },
+      },
     },
   },
 }
