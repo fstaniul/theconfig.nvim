@@ -88,15 +88,12 @@ vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('n', '<C-s>', '<cmd>w<CR>')
 vim.keymap.set('n', '<C-S-s>', '<cmd>w<CR>')
 
--- Faster movement when holding shift
-vim.keymap.set('n', 'K', '25k')
-vim.keymap.set('n', 'J', '25j')
-vim.keymap.set('n', 'H', '10h')
-vim.keymap.set('n', 'L', '10l')
+-- Stop capital J from joining the next line to the current one, which is the default behavior of J.
+vim.keymap.set({ 'n', 'v' }, 'J', 'j')
 
 -- Move between files on quickfix list
-vim.keymap.set('n', '<C-d>', ':cnext', { desc = 'Quickfix list next' })
-vim.keymap.set('n', '<C-d>', ':cprev', { desc = 'Quickfix list prev' })
+vim.keymap.set('n', '[q', ':cprev', { desc = 'Quickfix list prev' })
+vim.keymap.set('n', ']q', ':cnext', { desc = 'Quickfix list next' })
 
 -- Diagnostic Config & Keymaps
 -- See :help vim.diagnostic.Opts
@@ -690,7 +687,9 @@ require('lazy').setup({
         },
         opts = {},
       },
-      { 'fang2hou/blink-copilot' },
+      {
+        'fang2hou/blink-copilot',
+      },
     },
     ---@module 'blink.cmp'
     ---@type blink.cmp.Config
@@ -708,6 +707,7 @@ require('lazy').setup({
         -- you will need to read `:help ins-completion`
         --
         -- No, but seriously. Please read `:help ins-completion`, it is really good!
+        --
         --
         -- All presets have the following mappings:
         -- <tab>/<s-tab>: move to right/left of your snippet expansion
