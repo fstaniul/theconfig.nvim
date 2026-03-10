@@ -78,6 +78,18 @@ vim.o.scrolloff = 10
 -- See `:help 'confirm'`
 vim.o.confirm = true
 
+-- Set tab to be displayed as 4 spaces
+vim.o.tabstop = 4
+
+-- Autoread the file if it is not changed, but has changed in the filesystem
+vim.o.autoread = true
+
+-- Trigger autoread automatically after coming back to vim
+vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter' }, {
+  pattern = '*',
+  command = 'checktime',
+})
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -85,15 +97,12 @@ vim.o.confirm = true
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
-vim.keymap.set('n', '<C-s>', '<cmd>w<CR>')
-vim.keymap.set('n', '<C-S-s>', '<cmd>w<CR>')
-
 -- Stop capital J from joining the next line to the current one, which is the default behavior of J.
 vim.keymap.set({ 'n', 'v' }, 'J', 'j')
 
 -- Move between files on quickfix list
-vim.keymap.set('n', '[q', ':cprev', { desc = 'Quickfix list prev' })
-vim.keymap.set('n', ']q', ':cnext', { desc = 'Quickfix list next' })
+vim.keymap.set('n', '[q', ':cprev<CR>', { desc = 'Quickfix list prev' })
+vim.keymap.set('n', ']q', ':cnext<CR>', { desc = 'Quickfix list next' })
 
 -- Diagnostic Config & Keymaps
 -- See :help vim.diagnostic.Opts
@@ -537,6 +546,13 @@ require('lazy').setup({
         -- clangd = {},
         gopls = {
           root_markers = { '.git', 'go.mod' },
+          settings = {
+            gopls = {
+              buildFlags = {
+                '-tags=integration',
+              },
+            },
+          },
         },
 
         -- Go lint LSP
@@ -555,7 +571,7 @@ require('lazy').setup({
           },
         },
 
-        copilot = {},
+        -- copilot = {},
 
         -- pyright = {},
         -- rust_analyzer = {},
@@ -606,7 +622,10 @@ require('lazy').setup({
       --
       -- You can press `g?` for help in this menu.
       local ensure_installed = vim.tbl_keys(servers or {})
-      vim.list_extend(ensure_installed, {})
+      vim.list_extend(ensure_installed, {
+        'goimports',
+        'prettier',
+      })
 
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
@@ -649,11 +668,14 @@ require('lazy').setup({
       end,
       formatters_by_ft = {
         lua = { 'stylua' },
+        go = { 'goimports', 'gofmt' },
         -- Conform can also run multiple formatters sequentially
         -- python = { "isort", "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
         -- javascript = { "prettierd", "prettier", stop_after_first = true },
+        typescript = { 'prettier', stop_after_first = true, lsp_format = 'fallback' },
+        typescriptreact = { 'prettier', stop_after_first = true, lsp_format = 'fallback' },
       },
     },
   },
@@ -663,6 +685,8 @@ require('lazy').setup({
     event = 'VimEnter',
     version = '1.*',
     dependencies = {
+      -- For source completion
+      { 'saghen/blink.compat', version = '2.*' },
       -- Snippet Engine
       {
         'L3MON4D3/LuaSnip',
@@ -687,9 +711,9 @@ require('lazy').setup({
         },
         opts = {},
       },
-      {
-        'fang2hou/blink-copilot',
-      },
+      -- {
+      --   'fang2hou/blink-copilot',
+      -- },
     },
     ---@module 'blink.cmp'
     ---@type blink.cmp.Config
@@ -736,13 +760,13 @@ require('lazy').setup({
       },
 
       sources = {
-        default = { 'lsp', 'path', 'snippets', 'buffer', 'copilot' },
+        default = { 'lsp', 'path', 'snippets', 'buffer' },
         providers = {
-          copilot = {
-            name = 'copilot',
-            module = 'blink-copilot',
-            async = true,
-          },
+          -- copilot = {
+          --   name = 'copilot',
+          --   module = 'blink-copilot',
+          --   async = true,
+          -- },
         },
       },
 
@@ -755,7 +779,7 @@ require('lazy').setup({
       -- the rust implementation via `'prefer_rust_with_warning'`
       --
       -- See :h blink-cmp-config-fuzzy for more information
-      fuzzy = { implementation = 'lua' },
+      fuzzy = { implementation = 'prefer_rust_with_warning' },
 
       -- Shows a signature help window while you type arguments for a function
       signature = { enabled = true },
@@ -816,7 +840,7 @@ require('lazy').setup({
     branch = 'main',
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter-intro`
     config = function()
-      local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'go' }
+      local parsers = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'go', 'yaml' }
       require('nvim-treesitter').install(parsers)
       vim.api.nvim_create_autocmd('FileType', {
         callback = function(args)
