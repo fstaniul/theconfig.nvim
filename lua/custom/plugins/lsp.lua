@@ -150,7 +150,7 @@ return {
           },
         },
 
-        -- copilot = {},
+        copilot = {},
 
         -- pyright = {},
         -- rust_analyzer = {},
@@ -290,9 +290,9 @@ return {
         },
         opts = {},
       },
-      -- {
-      --   'fang2hou/blink-copilot',
-      -- },
+      {
+        'fang2hou/blink-copilot',
+      },
     },
     ---@module 'blink.cmp'
     ---@type blink.cmp.Config
@@ -339,13 +339,13 @@ return {
       },
 
       sources = {
-        default = { 'lsp', 'path', 'snippets', 'buffer' },
+        default = { 'copilot', 'lsp', 'path', 'snippets', 'buffer' },
         providers = {
-          -- copilot = {
-          --   name = 'copilot',
-          --   module = 'blink-copilot',
-          --   async = true,
-          -- },
+          copilot = {
+            name = 'copilot',
+            module = 'blink-copilot',
+            async = true,
+          },
         },
       },
 
