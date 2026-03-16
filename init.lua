@@ -93,6 +93,10 @@ vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter' }, {
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
+-- Remap j k to visual moves
+vim.keymap.set({ 'n', 'v' }, 'j', 'gj')
+vim.keymap.set({ 'n', 'v' }, 'k', 'gk')
+
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
