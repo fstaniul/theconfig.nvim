@@ -8,6 +8,60 @@ return {
     --- @type _99
     local _99 = require '99'
 
+    -- Copilot provider - my own implementation
+    --- @class CopilotProvider : _99.Providers.BaseProvider
+    local CopilotProvider = setmetatable({}, { __index = _99.Providers.BaseProvider })
+
+    --- @param query string
+    --- @param context _99.Prompt
+    --- @return string[]
+    function CopilotProvider._build_command(self, query, context)
+      local tmp_dir = vim.fs.dirname(context.tmp_file)
+
+      return {
+        'copilot',
+        '--allow-tool',
+        'write,shell(cat:*)',
+        '--add-dir',
+        tmp_dir,
+        '--model',
+        context.model,
+        '-p',
+        query,
+      }
+    end
+
+    --- @return string
+    function CopilotProvider._get_provider_name() return 'CopilotProvider' end
+
+    -- we're retuning the free model here, so we're not using tokens
+    --- @return string
+    function CopilotProvider._get_default_model() return 'claude-sonnet-4.6' end
+
+    function CopilotProvider.fetch_models(callback)
+      -- hardocded list
+      callback {
+        'claude-sonnet-4.6',
+        'claude-sonnet-4.5',
+        'claude-haiku-4.5',
+        'claude-opus-4.6',
+        'claude-opus-4.6-fast',
+        'claude-opus-4.5',
+        'claude-sonnet-4',
+        'gemini-3-pro-preview',
+        'gpt-5.4',
+        'gpt-5.3-codex',
+        'gpt-5.2-codex',
+        'gpt-5.2',
+        'gpt-5.1-codex-max',
+        'gpt-5.1-codex',
+        'gpt-5.1',
+        'gpt-5.1-codex-mini',
+        'gpt-5-mini',
+        'gpt-4.1',
+      }
+    end
+
     -- For logging that is to a file if you wish to trace through requests
     -- for reporting bugs, i would not rely on this, but instead the provided
     -- logging mechanisms within 99. This is for more debugging purposes.
@@ -15,7 +69,7 @@ return {
     local basename = vim.fs.basename(cwd)
 
     _99.setup {
-      provider = _99.Providers.OpenCodeProvider, -- default: OpenCodeProvider
+      -- provider = CopilotProvider,
       logger = {
         level = _99.DEBUG,
         path = '/tmp/' .. basename .. '.99.debug',
@@ -27,6 +81,8 @@ return {
       -- https://opencode.ai/docs/permissions/#external-directories
       -- https://code.claude.com/docs/en/permissions#read-and-edit
       tmp_dir = '~/.opencode/tmp',
+
+      model = 'github-copilot/claude-sonnet-4.6',
 
       --- Completions: #rules and @files in the prompt buffer
       completion = {
@@ -89,11 +145,61 @@ return {
     --
     -- likely ill add a mode check and assert on required visual mode
     -- so just prepare for it now
-    vim.keymap.set('v', '<leader>9v', function() _99.visual() end)
+    vim.keymap.set('v', '<leader>9v', function() _99.visual() end, { desc = '99 [V]isual Replace' })
 
     --- if you have a request you dont want to make any changes, just cancel it
-    vim.keymap.set('n', '<leader>9x', function() _99.stop_all_requests() end)
+    vim.keymap.set('n', '<leader>9x', function() _99.stop_all_requests() end, { desc = '99 Stop All Requests' })
 
-    vim.keymap.set('n', '<leader>9s', function() _99.search() end)
+    vim.keymap.set('n', '<leader>9s', function() _99.search() end, { desc = '99 [S]earch' })
+
+    vim.keymap.set('n', '<leader>9l', function() _99.view_logs() end, { desc = '99 View [L]ogs' })
+
+    vim.keymap.set('n', '<leader>9c', function() _99.vibe() end, { desc = '99 Vibe [C]ode' })
+
+    local pickers = require 'telescope.pickers'
+    local finders = require 'telescope.finders'
+    local conf = require('telescope.config').values
+    local actions = require 'telescope.actions'
+    local action_state = require 'telescope.actions.state'
+
+    local function select_model(callback)
+      _99.get_provider().fetch_models(function(models, err)
+        pickers
+          .new({}, {
+            prompt_title = 'Select model',
+            finder = finders.new_table {
+              results = models,
+            },
+            sorter = conf.generic_sorter {},
+            attach_mappings = function(prompt_bufnr, map)
+              actions.select_default:replace(function()
+                actions.close(prompt_bufnr)
+                local selection = action_state.get_selected_entry()
+
+                _99.set_model(selection[1])
+                print('Selected model: ' .. selection[1])
+              end)
+
+              return true
+            end,
+          })
+          :find()
+      end)
+    end
+
+    vim.keymap.set('n', '<leader>9m', select_model, { desc = '99 Select [M]odel' })
+
+    vim.api.nvim_create_user_command('UseOpenCode', function(opts)
+      _99.set_provider(_99.Providers.OpenCodeProvider)
+      _99.set_model 'github-copilot/claude-sonnet-4.6'
+    end, {
+      nargs = 0, -- 0 or more args ('0', '1', '?', '+', '*')
+      desc = 'Use OpenCodeProvider for 99',
+    })
+
+    vim.api.nvim_create_user_command('UseCopilot', function(opts) _99.set_provider(CopilotProvider) end, {
+      nargs = 0, -- 0 or more args ('0', '1', '?', '+', '*')
+      desc = 'Use CopilotProvider for 99',
+    })
   end,
 }
