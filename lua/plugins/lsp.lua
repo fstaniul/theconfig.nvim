@@ -148,18 +148,8 @@ return {
               '--issues-exit-code=1',
             },
           },
+          filetypes = { 'go' },
         },
-
-        copilot = {},
-
-        -- pyright = {},
-        -- rust_analyzer = {},
-        --
-        -- Some languages (like typescript) have entire language plugins that can be useful:
-        --    https://github.com/pmizio/typescript-tools.nvim
-        --
-        -- But for many setups, the LSP (`ts_ls`) will work just fine
-        -- ts_ls = {},
 
         stylua = {}, -- Used to format Lua code
 
@@ -192,6 +182,8 @@ return {
           },
         },
       }
+
+      if vim.g.enable_copilot then servers.copilot = {} end
 
       -- Ensure the servers and tools above are installed
       --
@@ -290,9 +282,9 @@ return {
         },
         opts = {},
       },
-      {
+      vim.g.enable_copilot and {
         'fang2hou/blink-copilot',
-      },
+      } or {},
     },
     ---@module 'blink.cmp'
     ---@type blink.cmp.Config
@@ -339,7 +331,7 @@ return {
       },
 
       sources = {
-        default = { 'copilot', 'lsp', 'path', 'snippets', 'buffer' },
+        default = { vim.g.enable_copilot and 'copilot' or nil, 'lsp', 'path', 'snippets' },
         providers = {
           copilot = {
             name = 'copilot',

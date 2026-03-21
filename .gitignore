@@ -3,11 +3,6 @@ test.sh
 .luarc.json
 nvim
 
-spell/
-
-# You likely want to comment this, since it's recommended to track lazy-lock.json in version
-# control, see https://lazy.folke.io/usage/lockfile
-# For kickstart, it makes sense to leave it ignored.
-lazy-lock.json
+lua/core/local_options.lua
 
 .DS_Store

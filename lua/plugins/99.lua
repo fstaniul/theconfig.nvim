@@ -1,5 +1,8 @@
+---@module 'lazy'
+---@type LazyConfig
 return {
   'ThePrimeagen/99',
+  enabled = vim.g.enable_99,
   dependencies = {
     -- we use completion from blink
     'saghen/blink.cmp',
