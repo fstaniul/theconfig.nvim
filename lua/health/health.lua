@@ -32,14 +32,29 @@ local check_external_reqs = function()
   return true
 end
 
+local gmatch_table = function(s, p)
+  local t = {}
+  for v in s:gmatch(p) do
+    table.insert(t, v)
+  end
+  return t
+end
+
 local check_golangci_lint_version = function()
-  if not vim.fn.executable 'golangci-lint' == 1 then
-    vim.health.warn(string.format("Could not find executable: '%s'", exe))
+  if vim.fn.executable 'golangci-lint' == 0 then
+    vim.health.warn(string.format("Could not find executable: '%s'", 'golangci-lint'))
     return
   end
 
-  local version = vim.fn.system 'golangci-lint version --format short'
-  if vim.version.lt(version, '2') then vim.health.warn(string.format('golangci-lint is outdated, update to version >=2: golangci-lint version %s', version)) end
+  local output = vim.fn.system 'golangci-lint version'
+  local version = gmatch_table(output, '%S+')[4]
+  if version == nil then
+    vim.health.error(string.format('unexpected response from golangci-lang version: %s', version))
+  elseif vim.version.lt(version, '2') then
+    vim.health.error(string.format('golangci-lint is outdated, update to version >=2: golangci-lint version %s', version))
+  else
+    vim.health.ok(output)
+  end
 end
 
 return {

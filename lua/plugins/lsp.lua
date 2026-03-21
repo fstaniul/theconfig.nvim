@@ -123,6 +123,7 @@ return {
       ---@type table<string, vim.lsp.Config>
       local servers = {
         -- clangd = {},
+
         gopls = {
           root_markers = { '.git', 'go.mod' },
           settings = {
