@@ -66,6 +66,10 @@ vim.keymap.set('n', '<C-S-k>', '<C-w>K', { desc = 'Move window to the upper' })
 -- Actions into not existing register, so that we won't copy it over
 vim.keymap.set({ 'n' }, '<leader>D', '"_D', { desc = 'Delete into void register' })
 vim.keymap.set({ 'v' }, '<leader>d', '"_d', { desc = 'Delete into void register' })
-vim.keymap.set({ 'n', 'v' }, '<leader>dd', '"_dd', { desc = 'Delete into void register' })
+vim.keymap.set({ 'n' }, '<leader>dd', '"_dd', { desc = 'Delete into void register' })
+
+-- Move up and down in visualmode with J and K
+vim.keymap.set({ 'v' }, 'K', ":m'<-2<CR>gv=`>my`<mzgv`yo`z", { desc = 'Move lines one line up' })
+vim.keymap.set({ 'v' }, 'J', ":m'>+<CR>gv=`<my`>mzgv`yo`z", { desc = 'Move lines one line down' })
 
 -- vim: ts=2 sts=2 sw=2 et

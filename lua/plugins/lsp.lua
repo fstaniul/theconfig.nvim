@@ -125,7 +125,7 @@ return {
         -- clangd = {},
 
         gopls = {
-          root_markers = { '.git', 'go.mod' },
+          root_markers = { 'go.mod', '.git' },
           settings = {
             gopls = {
               buildFlags = {
@@ -138,7 +138,7 @@ return {
         -- Go lint LSP
         ['golangci-lint-langserver'] = {
           cmd = { 'golangci-lint-langserver' },
-          root_markers = { '.git', 'go.mod' },
+          root_markers = { 'go.mod', '.git' },
           init_options = {
             command = {
               'golangci-lint',
