@@ -116,6 +116,54 @@ return { -- Fuzzy Finder (files, lsp, etc)
       end
     end
 
+    function search_multigrep(opts)
+      local opts = opts or {}
+      opts.cwd = opts.cwd or vim.uv.cwd()
+      local pickers = require 'telescope.pickers'
+      local finders = require 'telescope.finders'
+      local sorters = require 'telescope.sorters'
+      local conf = require('telescope.config').values
+      local make_entry = require 'telescope.make_entry'
+
+      local finder = finders.new_async_job {
+        command_generator = function(prompt)
+          if not prompt or prompt == '' then return nil end
+
+          local pattern, glob = prompt:match '^(.*)  (.-)$'
+
+          local args = {
+            'rg',
+            '--vimgrep',
+            '--smart-case',
+            '--hidden',
+          }
+
+          if pattern and glob then
+            table.insert(args, '-e')
+            table.insert(args, pattern)
+            table.insert(args, '-g')
+            table.insert(args, glob)
+          else
+            table.insert(args, '-e')
+            table.insert(args, prompt)
+          end
+
+          return args
+        end,
+        entry_maker = make_entry.gen_from_vimgrep(opts),
+        cwd = opts.cwd,
+      }
+
+      pickers
+        .new(opts, {
+          prompt_title = 'Multi Grep (rg with glob)',
+          finder = finder,
+          sorter = sorters.empty(),
+          previewer = conf.grep_previewer(opts),
+        })
+        :find()
+    end
+
     vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
     vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
     vim.keymap.set('n', '<leader>sf', find_files_from_project_git_root, { desc = '[S]earch [F]iles' })
@@ -124,6 +172,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
     vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
     vim.keymap.set({ 'n', 'v' }, '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
     vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
+    vim.keymap.set('n', '<leader>sm', search_multigrep, { desc = '[S]earch [M]ultigrep' })
     vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
     vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
     vim.keymap.set('n', '<leader>so', builtin.oldfiles, { desc = '[S]earch Recent [O]ld Files' })
