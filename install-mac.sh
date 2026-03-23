@@ -7,6 +7,7 @@ fatal() {
 
 warn() {
   echo "WARNING: $1"
+  return 1
 }
 
 echo 'install neovim dependencies...'
@@ -24,6 +25,14 @@ rm -rf ~/.config/nvim
 
 echo 'clone nvim...'
 git clone https://github.com/fstaniul/theconfig.nvim.git ~/.config/nvim
+
+echo 'install colorscripts'
+git clone https://gitlab.com/dwt1/shell-color-scripts.git ~/.local/colorscripts || warn 'failed to clone colorscript, see: https://gitlab.com/dwt1/shell-color-scripts'
+if [$? -eq 0]; then
+  cd ~/.local/colorscripts
+  sudo make install && echo "installed color scripts" || warn 'failed to install colorscripts'
+  cd -
+fi
 
 echo "done."
 
