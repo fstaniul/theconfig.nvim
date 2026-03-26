@@ -72,4 +72,9 @@ vim.keymap.set({ 'n' }, '<leader>dd', '"_dd', { desc = 'Delete into void registe
 vim.keymap.set({ 'v' }, 'K', ":m'<-2<CR>gv=`>my`<mzgv`yo`z", { desc = 'Move lines one line up' })
 vim.keymap.set({ 'v' }, 'J', ":m'>+<CR>gv=`<my`>mzgv`yo`z", { desc = 'Move lines one line down' })
 
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'lua',
+  callback = function() vim.keymap.set({ 'n' }, '<leader>X', ':source %<CR>', { desc = 'Source current buffer', buffer = true }) end,
+})
+
 -- vim: ts=2 sts=2 sw=2 et

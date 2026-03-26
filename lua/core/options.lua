@@ -90,4 +90,8 @@ vim.o.tabstop = 4
 -- Autoread the file if it is not changed, but has changed in the filesystem
 vim.o.autoread = true
 
+-- Color 80th column
+vim.o.textwidth = 80
+vim.o.colorcolumn = '80,144'
+
 -- vim: ts=2 sts=2 sw=2 et
