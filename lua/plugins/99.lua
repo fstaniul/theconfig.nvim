@@ -72,7 +72,7 @@ return {
     local basename = vim.fs.basename(cwd)
 
     _99.setup {
-      -- provider = CopilotProvider,
+      provider = CopilotProvider,
       logger = {
         level = _99.DEBUG,
         path = '/tmp/' .. basename .. '.99.debug',
