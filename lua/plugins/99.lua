@@ -1,3 +1,56 @@
+---@class CopilotProvider : _99.Providers.BaseProvider
+local CopilotProvider = {}
+
+--- @param query string
+--- @param context _99.Prompt
+--- @return string[]
+function CopilotProvider._build_command(self, query, context)
+  local tmp_dir = vim.fs.dirname(context.tmp_file)
+
+  return {
+    'copilot',
+    '--allow-tool',
+    'write,shell(cat:*)',
+    '--add-dir',
+    tmp_dir,
+    '--model',
+    context.model,
+    '-p',
+    query,
+  }
+end
+
+--- @return string
+function CopilotProvider._get_provider_name() return 'CopilotProvider' end
+
+-- we're retuning the free model here, so we're not using tokens
+--- @return string
+function CopilotProvider._get_default_model() return 'claude-sonnet-4.6' end
+
+function CopilotProvider.fetch_models(callback)
+  -- hardocded list
+  callback {
+    'claude-sonnet-4.6',
+    'claude-sonnet-4.5',
+    'claude-haiku-4.5',
+    'claude-opus-4.6',
+    'claude-opus-4.6-fast',
+    'claude-opus-4.5',
+    'claude-sonnet-4',
+    'gemini-3-pro-preview',
+    'gpt-5.4',
+    'gpt-5.3-codex',
+    'gpt-5.2-codex',
+    'gpt-5.2',
+    'gpt-5.1-codex-max',
+    'gpt-5.1-codex',
+    'gpt-5.1',
+    'gpt-5.1-codex-mini',
+    'gpt-5-mini',
+    'gpt-4.1',
+  }
+end
+
 ---@module 'lazy'
 ---@type LazyConfig
 return {
@@ -12,59 +65,7 @@ return {
     --- @type _99
     local _99 = require '99'
 
-    -- Copilot provider - my own implementation
-    --- @class CopilotProvider : _99.Providers.BaseProvider
-    local CopilotProvider = setmetatable({}, { __index = _99.Providers.BaseProvider })
-
-    --- @param query string
-    --- @param context _99.Prompt
-    --- @return string[]
-    function CopilotProvider._build_command(self, query, context)
-      local tmp_dir = vim.fs.dirname(context.tmp_file)
-
-      return {
-        'copilot',
-        '--allow-tool',
-        'write,shell(cat:*)',
-        '--add-dir',
-        tmp_dir,
-        '--model',
-        context.model,
-        '-p',
-        query,
-      }
-    end
-
-    --- @return string
-    function CopilotProvider._get_provider_name() return 'CopilotProvider' end
-
-    -- we're retuning the free model here, so we're not using tokens
-    --- @return string
-    function CopilotProvider._get_default_model() return 'claude-sonnet-4.6' end
-
-    function CopilotProvider.fetch_models(callback)
-      -- hardocded list
-      callback {
-        'claude-sonnet-4.6',
-        'claude-sonnet-4.5',
-        'claude-haiku-4.5',
-        'claude-opus-4.6',
-        'claude-opus-4.6-fast',
-        'claude-opus-4.5',
-        'claude-sonnet-4',
-        'gemini-3-pro-preview',
-        'gpt-5.4',
-        'gpt-5.3-codex',
-        'gpt-5.2-codex',
-        'gpt-5.2',
-        'gpt-5.1-codex-max',
-        'gpt-5.1-codex',
-        'gpt-5.1',
-        'gpt-5.1-codex-mini',
-        'gpt-5-mini',
-        'gpt-4.1',
-      }
-    end
+    setmetatable(CopilotProvider, { __index = _99.Providers.BaseProvider })
 
     -- For logging that is to a file if you wish to trace through requests
     -- for reporting bugs, i would not rely on this, but instead the provided
@@ -95,7 +96,7 @@ return {
       -- https://code.claude.com/docs/en/permissions#read-and-edit
       tmp_dir = tmp_dir,
 
-      model = 'github-copilot/claude-sonnet-4.6',
+      model = 'claude-sonnet-4.6',
 
       --- Completions: #rules and @files in the prompt buffer
       completion = {
