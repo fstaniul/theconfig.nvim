@@ -10,6 +10,9 @@ vim.g.have_nerd_font = true
 -- Whether to enable 99 plugin
 vim.g.enable_99 = true
 
+-- Whether to enable copilot
+vim.g.enable_copilot = true
+
 -- [[ Setting options ]]
 -- See `:help vim.o`
 -- NOTE: You can change these options as you wish!

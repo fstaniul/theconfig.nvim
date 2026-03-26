@@ -6,6 +6,7 @@ return {
   dependencies = {
     -- we use completion from blink
     'saghen/blink.cmp',
+    'folke/snacks.nvim',
   },
   config = function()
     --- @type _99
@@ -71,6 +72,15 @@ return {
     local cwd = vim.uv.cwd()
     local basename = vim.fs.basename(cwd)
 
+    local git_root = Snacks.git.get_root(cwd)
+    print(vim.inspect(git_root))
+    local tmp_dir
+    if git_root ~= nil and git_root ~= '' then
+      tmp_dir = git_root .. '/.tmp'
+    else
+      tmp_dir = './.tmp'
+    end
+
     _99.setup {
       provider = CopilotProvider,
       logger = {
@@ -83,7 +93,7 @@ return {
       -- and generation will fail refer to tool documentation to resolve
       -- https://opencode.ai/docs/permissions/#external-directories
       -- https://code.claude.com/docs/en/permissions#read-and-edit
-      tmp_dir = '~/.opencode/tmp',
+      tmp_dir = tmp_dir,
 
       model = 'github-copilot/claude-sonnet-4.6',
 

@@ -64,7 +64,7 @@ return {
               {
                 icon = ' ',
                 title = 'Review requests',
-                cmd = 'gh search prs --state=open --review-requested=@me',
+                cmd = [[gh search prs --review-requested=@me --state=open --json number,repository,title --template '{{range . }}{{tablerow (printf "#%v" .number | autocolor "green") .repository.name .title}}{{end}}{{tablerender}}']],
                 key = 'P',
                 action = function() vim.ui.open 'https://github.com/pulls/review-requested' end,
                 height = 6,
