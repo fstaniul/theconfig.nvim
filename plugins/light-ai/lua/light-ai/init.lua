@@ -151,9 +151,7 @@ function M.visual_replace(_opts)
     end)
   end
 
-  local function on_prompt_cancel(_)
-    log:info 'prompt cancelled'
-  end
+  local function on_prompt_cancel(_) log:info 'prompt cancelled' end
 
   popup.input('AI Prompt', on_prompt_submit, on_prompt_cancel)
 end
@@ -192,8 +190,6 @@ function M.setup(opts)
   state.model = opts.model or state.provider:get_default_model()
   state.temp_dir = opts.temp_dir
   state.spinner_manager = popup.SpinnerManager.new(state.agents)
-
-  log:info('light-ai setup, provider=%s, model=%s, temp_dir=%s', state.provider:get_provider_name(), state.model, state.temp_dir)
 end
 
 return M
