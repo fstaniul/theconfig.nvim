@@ -9,8 +9,10 @@ function CopilotProvider._build_command(self, query, context)
 
   return {
     'copilot',
+    '--deny-tool',
+    'write',
     '--allow-tool',
-    'write,shell(cat:*)',
+    'shell(cat:*)',
     '--add-dir',
     tmp_dir,
     '--model',
@@ -55,11 +57,12 @@ end
 ---@type LazyConfig
 return {
   'ThePrimeagen/99',
-  enabled = vim.g.enable_99,
+  enabled = false,
   dependencies = {
     -- we use completion from blink
     'saghen/blink.cmp',
     'folke/snacks.nvim',
+    'MunifTanjim/nui.nvim',
   },
   config = function()
     --- @type _99
@@ -83,7 +86,7 @@ return {
     end
 
     _99.setup {
-      provider = CopilotProvider,
+      provider = _99.Providers.OpenCodeProvider,
       logger = {
         level = _99.DEBUG,
         path = '/tmp/' .. basename .. '.99.debug',
@@ -96,7 +99,9 @@ return {
       -- https://code.claude.com/docs/en/permissions#read-and-edit
       tmp_dir = tmp_dir,
 
-      model = 'claude-sonnet-4.6',
+      display_errors = true,
+
+      model = 'github-copilot/claude-sonnet-4.6',
 
       --- Completions: #rules and @files in the prompt buffer
       completion = {
@@ -152,6 +157,52 @@ return {
       },
     }
 
+    local Popup = require 'nui.popup'
+    local event = require('nui.utils.autocmd').event
+
+    function custom_visual_mode()
+      local popup = Popup {
+        enter = true,
+        focusable = true,
+        border = {
+          text = {
+            top = ' Prompt ',
+            top_align = 'center',
+            bottom = ' <enter> continue | <esc> cancel ',
+            bottom_align = 'left',
+          },
+          style = 'rounded',
+        },
+        position = '50%',
+        size = {
+          width = '60%',
+          height = '60%',
+        },
+      }
+
+      -- mount/open the component
+      popup:mount()
+
+      vim.keymap.set('n', '<esc>', function() popup:unmount() end, { buffer = popup.bufnr })
+      vim.keymap.set('n', '<cr>', function()
+        local lines = vim.api.nvim_buf_get_lines(popup.bufnr, 0, -1, false)
+
+        popup:unmount()
+
+        if #lines <= 1 and lines[1] == '' then return end
+        table.insert(lines, [[<MustObey>Use tmp-write tool to write your response to the temp file.<MustObey>]])
+
+        _99.visual {
+          additional_prompt = table.concat(lines, '\n'),
+        }
+      end, { buffer = popup.bufnr })
+
+      -- unmount component when cursor leaves buffer
+      popup:on(event.BufLeave, function() popup:unmount() end)
+
+      vim.api.nvim_buf_set_lines(popup.bufnr, 0, 1, false, { '' })
+    end
+
     -- take extra note that i have visual selection only in v mode
     -- technically whatever your last visual selection is, will be used
     -- so i have this set to visual mode so i dont screw up and use an
@@ -159,7 +210,7 @@ return {
     --
     -- likely ill add a mode check and assert on required visual mode
     -- so just prepare for it now
-    vim.keymap.set('v', '<leader>9v', function() _99.visual() end, { desc = '99 [V]isual Replace' })
+    vim.keymap.set('v', '<leader>9v', custom_visual_mode, { desc = '99 [V]isual Replace' })
 
     --- if you have a request you dont want to make any changes, just cancel it
     vim.keymap.set('n', '<leader>9x', function() _99.stop_all_requests() end, { desc = '99 Stop All Requests' })
@@ -170,38 +221,7 @@ return {
 
     vim.keymap.set('n', '<leader>9c', function() _99.vibe() end, { desc = '99 Vibe [C]ode' })
 
-    local pickers = require 'telescope.pickers'
-    local finders = require 'telescope.finders'
-    local conf = require('telescope.config').values
-    local actions = require 'telescope.actions'
-    local action_state = require 'telescope.actions.state'
-
-    local function select_model(callback)
-      _99.get_provider().fetch_models(function(models, err)
-        pickers
-          .new({}, {
-            prompt_title = 'Select model',
-            finder = finders.new_table {
-              results = models,
-            },
-            sorter = conf.generic_sorter {},
-            attach_mappings = function(prompt_bufnr, map)
-              actions.select_default:replace(function()
-                actions.close(prompt_bufnr)
-                local selection = action_state.get_selected_entry()
-
-                _99.set_model(selection[1])
-                print('Selected model: ' .. selection[1])
-              end)
-
-              return true
-            end,
-          })
-          :find()
-      end)
-    end
-
-    vim.keymap.set('n', '<leader>9m', select_model, { desc = '99 Select [M]odel' })
+    vim.keymap.set('n', '<leader>9m', function() require('99.extensions.telescope').select_model() end, { desc = '99 Select [M]odel' })
 
     vim.api.nvim_create_user_command('UseOpenCode', function(opts)
       _99.set_provider(_99.Providers.OpenCodeProvider)
@@ -211,7 +231,10 @@ return {
       desc = 'Use OpenCodeProvider for 99',
     })
 
-    vim.api.nvim_create_user_command('UseCopilot', function(opts) _99.set_provider(CopilotProvider) end, {
+    vim.api.nvim_create_user_command('UseCopilot', function(opts)
+      _99.set_provider(CopilotProvider)
+      _99.set_model 'claude-sonnet-4.6'
+    end, {
       nargs = 0, -- 0 or more args ('0', '1', '?', '+', '*')
       desc = 'Use CopilotProvider for 99',
     })

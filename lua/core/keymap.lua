@@ -74,7 +74,7 @@ vim.keymap.set({ 'v' }, 'J', ":m'>+<CR>gv=`<my`>mzgv`yo`z", { desc = 'Move lines
 
 vim.api.nvim_create_autocmd('FileType', {
   pattern = 'lua',
-  callback = function() vim.keymap.set({ 'n' }, '<leader>X', ':source %<CR>', { desc = 'Source current buffer', buffer = true }) end,
+  callback = function() vim.keymap.set({ 'n' }, '<leader>X', ':source %<CR>', { desc = 'Source current buffer', buffer = true, silent = true }) end,
 })
 
 -- vim: ts=2 sts=2 sw=2 et
