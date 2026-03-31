@@ -25,14 +25,19 @@ return {
         },
       },
       filtered_items = {
-        visible = true,
+        visible = false,
         children_inherit_highlights = true,
         hide_dotfiles = false,
         hide_gitignored = false,
+        hide_by_name = {
+          '.git',
+          'node_modules',
+        },
         -- remains hidden even if visible is toggled to true, this overrides always_show
         never_show = {
           '.DS_Store',
           'thumbs.db',
+          '.git',
         },
       },
     },

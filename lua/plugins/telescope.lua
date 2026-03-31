@@ -90,7 +90,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
     ---@type table<string, boolean>
     local is_inside_work_tree = {}
     local function is_git_repo()
-      local cwd = vim.fn.getcwd()
+      local cwd = vim.uv.cwd() or vim.fn.getcwd()
       if is_inside_work_tree[cwd] == nil then
         vim.fn.system 'git rev-parse --is-inside-work-tree'
         is_inside_work_tree[cwd] = vim.v.shell_error == 0
@@ -98,7 +98,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
       return is_inside_work_tree[cwd]
     end
 
-    function find_files_from_project_git_root()
+    local function find_files_from_project_git_root()
       local opts = {}
       if is_git_repo() then opts = {
         cwd = get_git_root(),
@@ -106,8 +106,10 @@ return { -- Fuzzy Finder (files, lsp, etc)
       builtin.find_files(opts)
     end
 
-    function git_files_with_fallback()
-      local opts = {} -- define here if you want to define something
+    local function git_files_with_fallback()
+      local opts = {
+        cwd = vim.uv.cwd() or vim.fm.getcwd(),
+      }
 
       if is_git_repo() then
         builtin.git_files(opts)
@@ -116,7 +118,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
       end
     end
 
-    function search_multigrep(opts)
+    local function search_multigrep(opts)
       local opts = opts or {}
       opts.cwd = opts.cwd or vim.uv.cwd()
       local pickers = require 'telescope.pickers'
@@ -170,12 +172,26 @@ return { -- Fuzzy Finder (files, lsp, etc)
     vim.keymap.set('n', '<leader>st', builtin.treesitter, { desc = '[S]earch [T]reesitter symbols' })
     vim.keymap.set('n', '<C-P>', git_files_with_fallback, { desc = 'Search git files' })
     vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
+    vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = '[S]earch [B]uffers' })
     vim.keymap.set({ 'n', 'v' }, '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
     vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
     vim.keymap.set('n', '<leader>sm', search_multigrep, { desc = '[S]earch [M]ultigrep' })
     vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
     vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
     vim.keymap.set('n', '<leader>so', builtin.oldfiles, { desc = '[S]earch Recent [O]ld Files' })
+    vim.keymap.set(
+      'n',
+      '<leader>sa',
+      function()
+        builtin.find_files {
+          cwd = get_git_root(),
+          no_ignore = true,
+          no_ignore_parent = true,
+          hidden = { '.git' },
+        }
+      end,
+      { desc = '[S]earch Recent [O]ld Files' }
+    )
     vim.keymap.set('n', '<leader>s.', function() builtin.find_files { cwd = vim.fn.expand '%:p:h' } end, { desc = '[S]earch In Current Directory' })
     vim.keymap.set('n', '<leader>sc', builtin.commands, { desc = '[S]earch [C]ommands' })
     vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = 'Find existing buffers' })

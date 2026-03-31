@@ -85,13 +85,14 @@ vim.o.scrolloff = 10
 vim.o.confirm = true
 
 -- Set tab to be displayed as 4 spaces
-vim.o.tabstop = 4
+vim.o.tabstop = 4 -- Visual width of a tab
+vim.opt.softtabstop = 4 -- The number of spaces a tab counts for while editing
+vim.opt.shiftwidth = 4 -- Size of an indent
 
 -- Autoread the file if it is not changed, but has changed in the filesystem
 vim.o.autoread = true
 
 -- Color 80th column
-vim.o.textwidth = 80
 vim.o.colorcolumn = '80,144'
 
 -- vim: ts=2 sts=2 sw=2 et
