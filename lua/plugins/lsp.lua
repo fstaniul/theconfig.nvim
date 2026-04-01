@@ -151,9 +151,10 @@ return {
 
         stylua = {}, -- Used to format Lua code
 
-        ts_ls = {},
-        oxlint = {},
-        eslint = {},
+        -- typescript seems to work badly in nvim :/
+        -- ts_ls = {},
+        -- oxlint = {},
+        -- eslint = {},
 
         -- Special Lua Config, as recommended by neovim help docs
         lua_ls = {
