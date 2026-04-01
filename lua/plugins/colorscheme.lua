@@ -1,4 +1,4 @@
-local selected_theme = 'github-theme'
+local selected_theme = 'alabaster'
 
 ---@param name string
 local function isSelected(name) return name == selected_theme end
@@ -32,6 +32,18 @@ return {
       require('github-theme').setup {}
 
       vim.cmd 'colorscheme github_dark'
+    end,
+  },
+  {
+    -- https://github.com/dchinmay2/alabaster.nvim
+    'dchinmay2/alabaster.nvim',
+    name = 'alabaster',
+    enabled = isSelected 'alabaster',
+    lazy = false,
+    priority = 1000,
+    config = function()
+      vim.cmd [[set termguicolors]]
+      vim.cmd [[colorscheme alabaster]]
     end,
   },
 }

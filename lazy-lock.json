@@ -1,6 +1,7 @@
 {
   "99": { "branch": "master", "commit": "0172d3caae2d8b967c9d47aa7557295f1481e5df" },
   "LuaSnip": { "branch": "master", "commit": "5a1e39223db9a0498024a77b8441169d260c8c25" },
+  "alabaster": { "branch": "main", "commit": "ae0c5f41c70b576f0678319e57fe47b2b288d2fc" },
   "blink-copilot": { "branch": "main", "commit": "7ad8209b2f880a2840c94cdcd80ab4dc511d4f39" },
   "blink.cmp": { "branch": "main", "commit": "451168851e8e2466bc97ee3e026c3dcb9141ce07" },
   "blink.compat": { "branch": "main", "commit": "2ed6d9a28b07fa6f3bface818470605f8896408c" },
