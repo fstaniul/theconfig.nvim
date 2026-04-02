@@ -126,7 +126,7 @@ function SpinnerManager:_lines()
   local lines = {}
   for _, agent in ipairs(self._agents) do
     if agent.status == 'running' then
-      table.insert(lines, frame_char .. ' agent #' .. agent.num .. ' running')
+      table.insert(lines, frame_char .. ' agent #' .. agent.num .. ' ' .. agent.kind)
     end
   end
   return lines

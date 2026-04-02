@@ -6,3 +6,5 @@ Autoread
 filesystem
 treesitter
 signcolumn
+readonly
+quickfix

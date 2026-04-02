@@ -75,4 +75,50 @@ function M.pop_selection_marks(bufnr, ns, mark_start, mark_end)
   return ms[1] + 1, me[1] + 1  -- extmarks are 0-indexed
 end
 
+---@class SearchLocation
+---@field filename string  Absolute path to the file.
+---@field lnum integer     Starting line number (1-based).
+---@field col integer      Starting column number (1-based).
+---@field len integer      Number of lines to highlight.
+---@field notes string     Free-text notes for this location.
+
+---@class ParsedLocationsFile
+---@field locations SearchLocation[]  Parsed location entries.
+---@field notes_lines string[]        Lines of the free-form notes section.
+
+---Parses the raw content written by the search agent to its temp file.
+---Location lines come first in the format:
+---   /abs/path/file.lua:10:1,3,Some notes here.
+---The first blank line separates locations from the free-form notes section.
+---@param content string  Full contents of the agent temp file.
+---@return ParsedLocationsFile
+function M.parse_locations_file(content)
+  local locations = {}
+  local notes_lines = {}
+  local in_notes = false
+
+  for _, line in ipairs(vim.split(content, '\n', { plain = true })) do
+    if not in_notes then
+      if vim.trim(line) == '' then
+        in_notes = true
+      else
+        local filepath, lnum, col, len, notes = line:match '^(.+):(%d+):(%d+),(%d+),(.*)$'
+        if filepath then
+          table.insert(locations, {
+            filename = filepath,
+            lnum = tonumber(lnum),
+            col = tonumber(col),
+            len = tonumber(len),
+            notes = notes,
+          })
+        end
+      end
+    else
+      table.insert(notes_lines, line)
+    end
+  end
+
+  return { locations = locations, notes_lines = notes_lines }
+end
+
 return M
