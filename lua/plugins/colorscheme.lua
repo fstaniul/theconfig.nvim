@@ -32,13 +32,12 @@ local themes = {
   },
   {
     -- https://github.com/dchinmay2/alabaster.nvim
-    'dchinmay2/alabaster.nvim',
+    '~p00f/alabaster.nvim',
     name = 'alabaster',
+    dir = '~/Work/alabaster.nvim',
     config = function()
       vim.cmd [[set termguicolors]]
       vim.cmd [[colorscheme alabaster]]
-
-      -- vim.api.nvim_set_hl(0, '@keyword.return', { fg = '#71ade7' })
     end,
   },
 }
