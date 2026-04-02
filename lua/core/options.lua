@@ -95,4 +95,8 @@ vim.o.autoread = true
 -- Color 80th column
 vim.o.colorcolumn = '80,144'
 
+-- Enable spell checking, technically it should only care about comments if treesitter is there!
+vim.opt.spelllang = 'en_us'
+vim.opt.spell = true
+
 -- vim: ts=2 sts=2 sw=2 et

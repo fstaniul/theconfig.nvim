@@ -1,0 +1,8 @@
+listchars
+neovim
+whitespace
+lua
+Autoread
+filesystem
+treesitter
+signcolumn
