@@ -7,19 +7,27 @@ local util = require 'light-ai.util'
 
 local M = {}
 
--- ─── state ────────────────────────────────────────────────────────────────────
+-- ─── config ───────────────────────────────────────────────────────────────────
 
----@class LightAiState
+---@class LightAiConfig
 ---@field provider AgentProvider
 ---@field model string
 ---@field temp_dir string
+---@diagnostic disable: assign-type-mismatch
+local config = {
+  provider = nil,
+  model = nil,
+  temp_dir = nil,
+}
+---@diagnostic enable: assign-type-mismatch
+
+-- ─── state ────────────────────────────────────────────────────────────────────
+
+---@class LightAiState
 ---@field agents Agent[]
 ---@field spinner_manager SpinnerManager
 ---@diagnostic disable: assign-type-mismatch
 local state = {
-  provider = nil,
-  model = nil,
-  temp_dir = nil,
   agents = {},
   spinner_manager = nil,
 }
@@ -128,16 +136,16 @@ user in what he want to achieve.
 ---Sets the active model. Can be called at any time after setup.
 ---@param model string  Model identifier in provider/model format.
 function M.set_model(model)
-  state.model = model
+  config.model = model
   log:info('model set to %s', model)
 end
 
 ---Sets the active provider and resets the model to its default.
 ---@param provider AgentProvider
 function M.set_provider(provider)
-  state.provider = provider
-  state.model = provider:get_default_model()
-  log:info('provider set to %s, model reset to %s', provider:get_provider_name(), state.model)
+  config.provider = provider
+  config.model = provider:get_default_model()
+  log:info('provider set to %s, model reset to %s', provider:get_provider_name(), config.model)
 end
 
 ---Captures the current visual selection, asks for a prompt, then runs the
@@ -173,9 +181,9 @@ function M.visual_replace()
     ---@type AgentContext
     local context = {
       filename = filename,
-      temp_dir = state.temp_dir,
+      temp_dir = config.temp_dir,
       temp_file = '', -- filled in by Agent:run
-      model = state.model,
+      model = config.model,
       selection = selection,
       buffer = buffer_content,
       range = {
@@ -188,7 +196,7 @@ function M.visual_replace()
     }
 
     local num = #state.agents + 1
-    local agent = agents_mod.Agent.new(num, run_id, 'code', state.provider, PromptProvider.new(visual_replace_prompt))
+    local agent = agents_mod.Agent.new(num, run_id, 'code', config.provider, PromptProvider.new(visual_replace_prompt))
 
     table.insert(state.agents, agent)
     log:info('agent #%d created (id=%s), log=%s', num, agent.id, agent:log_file())
@@ -230,9 +238,9 @@ function M.search()
     ---@type AgentContext
     local context = {
       filename = '',
-      temp_dir = state.temp_dir,
+      temp_dir = config.temp_dir,
       temp_file = '',
-      model = state.model,
+      model = config.model,
       selection = '',
       buffer = '',
       range = nil,
@@ -240,7 +248,7 @@ function M.search()
     }
 
     local num = #state.agents + 1
-    local agent = agents_mod.Agent.new(num, run_id, 'search', state.provider, PromptProvider.new(search_prompt))
+    local agent = agents_mod.Agent.new(num, run_id, 'search', config.provider, PromptProvider.new(search_prompt))
 
     table.insert(state.agents, agent)
     log:info('search agent #%d created (id=%s)', num, agent.id)
@@ -282,7 +290,7 @@ function M.search()
       end
 
       if #qf_items == 0 then
-        log:warn('search agent #%d: no parseable locations found', num)
+        log:error('search agent #%d: no parseable locations found', num)
         vim.notify('light-ai: search returned no locations', vim.log.levels.WARN)
       else
         vim.fn.setqflist({}, ' ', { title = 'AI Search: ' .. user_prompt, items = qf_items })
@@ -320,22 +328,127 @@ function M.abort_all()
   end
 end
 
+---Opens a Telescope picker listing all agents that have been run this session.
+---The preview window shows the contents of the agent's temp file output.
+function M.preview_agents()
+  local pickers = require 'telescope.pickers'
+  local finders = require 'telescope.finders'
+  local conf = require('telescope.config').values
+  local previewers = require 'telescope.previewers'
+
+  if #state.agents == 0 then
+    vim.notify('light-ai: no agents have been run this session', vim.log.levels.INFO)
+    return
+  end
+
+  pickers
+    .new({}, {
+      prompt_title = 'AI Agents',
+      finder = finders.new_table {
+        results = state.agents,
+        entry_maker = function(agent)
+          local prompt_preview = agent.user_prompt and agent.user_prompt:gsub('\n', ' ') or '(no prompt)'
+          local display = string.format('#%d  %-6s  %-8s  %s', agent.num, agent.kind, agent.status, prompt_preview)
+          return {
+            value = agent,
+            display = display,
+            ordinal = display,
+            filename = agent.temp_file,
+            lnum = 1,
+            col = 1,
+          }
+        end,
+      },
+      sorter = conf.generic_sorter {},
+      previewer = previewers.new_buffer_previewer {
+        title = 'Agent Output',
+        define_preview = function(self, entry)
+          local agent = entry.value
+          local lines
+          if agent.temp_file then
+            local fh = io.open(agent.temp_file, 'r')
+            if fh then
+              local content = fh:read '*a'
+              fh:close()
+              lines = vim.split(content, '\n', { plain = true })
+            end
+          end
+          vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines or { '(no output)' })
+        end,
+      },
+    })
+    :find()
+end
+
+---Opens a Telescope picker listing all agents, previewing each agent's log file.
+function M.pick_logs()
+  local pickers = require 'telescope.pickers'
+  local finders = require 'telescope.finders'
+  local conf = require('telescope.config').values
+  local previewers = require 'telescope.previewers'
+
+  if #state.agents == 0 then
+    vim.notify('light-ai: no agents have been run this session', vim.log.levels.INFO)
+    return
+  end
+
+  pickers
+    .new({}, {
+      prompt_title = 'AI Agent Logs',
+      finder = finders.new_table {
+        results = state.agents,
+        entry_maker = function(agent)
+          local prompt_preview = agent.user_prompt and agent.user_prompt:gsub('\n', ' ') or '(no prompt)'
+          local display = string.format('#%d  %-6s  %-8s  %s', agent.num, agent.kind, agent.status, prompt_preview)
+          return {
+            value = agent,
+            display = display,
+            ordinal = display,
+            filename = agent:log_file(),
+            lnum = 1,
+            col = 1,
+          }
+        end,
+      },
+      sorter = conf.generic_sorter {},
+      previewer = previewers.new_buffer_previewer {
+        title = 'Agent Log',
+        define_preview = function(self, entry)
+          local agent = entry.value
+          local fh = io.open(agent:log_file(), 'r')
+          local lines
+          if fh then
+            local content = fh:read '*a'
+            fh:close()
+            lines = vim.split(content, '\n', { plain = true })
+          end
+          vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines or { '(no log)' })
+        end,
+      },
+    })
+    :find()
+end
+
 -- ─── setup ────────────────────────────────────────────────────────────────────
+
+---Returns a shallow copy of the current plugin configuration.
+---@return LightAiConfig
+function M.get_config() return { provider = config.provider, model = config.model, temp_dir = config.temp_dir } end
 
 ---@class LightAiOpts
 ---@field provider? AgentProvider  Defaults to OpenCodeProvider.
 ---@field model? string            Defaults to provider:get_default_model().
 ---@field temp_dir string          Directory for temporary files.
-
+---
 ---@param opts? LightAiOpts
 function M.setup(opts)
   opts = opts or {}
 
   assert(opts.temp_dir and opts.temp_dir ~= '', 'light-ai: opts.temp_dir is required')
 
-  state.provider = opts.provider or OpenCodeProvider:new()
-  state.model = opts.model or state.provider:get_default_model()
-  state.temp_dir = opts.temp_dir
+  config.provider = opts.provider or OpenCodeProvider:new()
+  config.model = opts.model or config.provider:get_default_model()
+  config.temp_dir = opts.temp_dir
   state.spinner_manager = popup.SpinnerManager.new(state.agents)
 
   -- Highlight search result ranges whenever a file buffer is displayed.

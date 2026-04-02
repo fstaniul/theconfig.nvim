@@ -8,3 +8,6 @@ treesitter
 signcolumn
 readonly
 quickfix
+plugin
+config
+opencode

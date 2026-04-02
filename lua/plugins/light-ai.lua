@@ -15,5 +15,7 @@ return {
     vim.keymap.set('n', '<leader>aX', function() ai.abort_all() end, { desc = 'AI abort all runners' })
     vim.keymap.set('n', '<leader>aH', function() ai.clear_search_highlights() end, { desc = 'Clear AI Search highlights' })
     vim.keymap.set('n', '<leader>as', function() ai.search() end, { desc = 'AI [S]earch codebase' })
+    vim.keymap.set('n', '<leader>aa', function() ai.preview_agents() end, { desc = 'AI [A]gents picker' })
+    vim.keymap.set('n', '<leader>al', function() ai.pick_logs() end, { desc = 'AI agent [L]ogs picker' })
   end,
 }

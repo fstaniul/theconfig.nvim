@@ -86,6 +86,7 @@ local Path = require 'plenary.path'
 ---@field num integer          Numeric identifier assigned by the caller (e.g. 1, 2, 3…).
 ---@field id string            Unique random run ID, used as the log file name.
 ---@field kind AgentKind       Type of agent: "code" for visual_replace, "search" for search.
+---@field user_prompt string   The raw prompt entered by the user for this run.
 ---@field log Logger           Per-run logger writing to /tmp/light-ai/<id>.log
 ---@field temp_file string|nil Path of the output temp file for the current/last run.
 ---@field status AgentStatus
@@ -133,6 +134,8 @@ function Agent:run(prompt, context, on_done)
     self.log:error 'run() called while already running, ignoring'
     return
   end
+
+  self.user_prompt = context.user_prompt
 
   -- resolve model
   if not context.model or context.model == '' then context.model = self._agent_provider:get_default_model() end
