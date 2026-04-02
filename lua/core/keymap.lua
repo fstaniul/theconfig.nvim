@@ -57,7 +57,7 @@ vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right win
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
--- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
+-- NOTE: Some terminals have colliding key maps or are not able to send distinct key codes
 vim.keymap.set('n', '<C-S-h>', '<C-w>H', { desc = 'Move window to the left' })
 vim.keymap.set('n', '<C-S-l>', '<C-w>L', { desc = 'Move window to the right' })
 vim.keymap.set('n', '<C-S-j>', '<C-w>J', { desc = 'Move window to the lower' })
@@ -68,7 +68,7 @@ vim.keymap.set({ 'n' }, '<leader>D', '"_D', { desc = 'Delete into void register'
 vim.keymap.set({ 'v' }, '<leader>d', '"_d', { desc = 'Delete into void register' })
 vim.keymap.set({ 'n' }, '<leader>dd', '"_dd', { desc = 'Delete into void register' })
 
--- Move up and down in visualmode with J and K
+-- Move up and down in visual mode with J and K
 vim.keymap.set({ 'v' }, 'K', ":m'<-2<CR>gv=`>my`<mzgv`yo`z", { desc = 'Move lines one line up' })
 vim.keymap.set({ 'v' }, 'J', ":m'>+<CR>gv=`<my`>mzgv`yo`z", { desc = 'Move lines one line down' })
 
@@ -76,5 +76,17 @@ vim.api.nvim_create_autocmd('FileType', {
   pattern = 'lua',
   callback = function() vim.keymap.set({ 'n' }, '<leader>X', ':source %<CR>', { desc = 'Source current buffer', buffer = true, silent = true }) end,
 })
+
+vim.keymap.set('n', '<leader>fy', function()
+  local path = vim.fn.expand '%'
+  vim.fn.setreg('+', path)
+  vim.notify('Yanked relative path: ' .. path)
+end, { desc = '[Y]ank relative [F]ile path' })
+
+vim.keymap.set('n', '<leader>fY', function()
+  local path = vim.fn.expand '%:p'
+  vim.fn.setreg('+', path)
+  vim.notify('Yanked absolute path: ' .. path)
+end, { desc = '[Yank] absolute [F]ile path' })
 
 -- vim: ts=2 sts=2 sw=2 et

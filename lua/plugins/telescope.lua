@@ -194,7 +194,6 @@ return { -- Fuzzy Finder (files, lsp, etc)
     )
     vim.keymap.set('n', '<leader>s.', function() builtin.find_files { cwd = vim.fn.expand '%:p:h' } end, { desc = '[S]earch In Current Directory' })
     vim.keymap.set('n', '<leader>sc', builtin.commands, { desc = '[S]earch [C]ommands' })
-    vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = 'Find existing buffers' })
 
     -- This runs on LSP attach per buffer (see main LSP attach function in 'neovim/nvim-lspconfig' config for more info,
     -- it is better explained there). This allows easily switching between pickers if you prefer using something else!

@@ -216,6 +216,7 @@ function M.visual_replace()
 
       vim.api.nvim_buf_set_lines(bufnr, cur_start - 1, cur_end, false, lines)
       log:info('agent #%d: replaced lines %d-%d (%d lines written)', num, cur_start, cur_end, #lines)
+      vim.notify(string.format('light-ai: agent #%d finished the job', num), vim.log.levels.INFO)
     end)
   end
 
