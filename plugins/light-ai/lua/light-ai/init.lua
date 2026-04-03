@@ -125,6 +125,11 @@ See <Output> for example of locations file.
 ONCE you're done with the answer and locations say "Done." and end the session.
 </MustObey>
 <TEMP_FILE>{{temp_file}}</TEMP_FILE>
+<Context>
+  <CurrentFilename>{{filename}}</CurrentFilename>
+  <CursorLocation>{{range}}</CursorLocation>
+  <CurrentFile>{{buffer}}</CurrentFile>
+</Context>
 <TaskDescription>
 You're given a task to find interesting locations throughtout the codebase, 
 follow provided prompt for what locations are of interest to the user. 
@@ -288,20 +293,34 @@ end
 ---the locations found, and opens a readonly scratch buffer in a horizontal
 ---split containing the agent's notes.
 function M.search()
+  local bufnr = vim.api.nvim_get_current_buf()
+  local filename = vim.api.nvim_buf_get_name(bufnr)
+
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local cursor_line, cursor_col = cursor[1], cursor[0]
+
   local function on_prompt_submit(user_prompt)
     log:info('search: prompt captured (length=%d), spawning agent', #user_prompt)
 
     local run_id = util.random_string(8)
 
+    local all_buf_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+    local buffer_content = table.concat(all_buf_lines, '\n')
+
     ---@type AgentContext
     local context = {
-      filename = '',
+      filename = filename,
       temp_dir = config.temp_dir,
       temp_file = '',
       model = config.model,
       selection = '',
-      buffer = '',
-      range = nil,
+      buffer = buffer_content,
+      range = {
+        start_line = cursor_line,
+        start_col = cursor_col,
+        end_line = cursor_line,
+        end_col = cursor_col,
+      },
       user_prompt = user_prompt,
     }
 
