@@ -79,25 +79,6 @@ return { -- Fuzzy Finder (files, lsp, etc)
     pcall(require('telescope').load_extension, 'fzf')
     pcall(require('telescope').load_extension, 'ui-select')
 
-    -- When opening Telescope from the dashboard, close the dashboard and open
-    -- a scratch buffer first. This ensures Trouble (and other tools) have a
-    -- real editing window to open files into, instead of hijacking the picker.
-    vim.api.nvim_create_autocmd('User', {
-      pattern = 'TelescopeFindPre',
-      callback = function()
-        local buf = vim.api.nvim_get_current_buf()
-        local ft = vim.api.nvim_get_option_value('filetype', { buf = buf })
-        if ft == 'snacks_dashboard' then
-          -- Replace the dashboard window with an empty scratch buffer
-          vim.cmd 'enew'
-          local new_buf = vim.api.nvim_get_current_buf()
-          vim.api.nvim_set_option_value('buftype', 'nofile', { buf = new_buf })
-          vim.api.nvim_set_option_value('bufhidden', 'wipe', { buf = new_buf })
-          vim.api.nvim_set_option_value('buflisted', false, { buf = new_buf })
-        end
-      end,
-    })
-
     -- See `:help telescope.builtin`
     local builtin = require 'telescope.builtin'
 
