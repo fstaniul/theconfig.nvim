@@ -35,21 +35,20 @@ local state = {
 
 local log = Logger.new 'system'
 
--- ─── search highlights ────────────────────────────────────────────────────────
+-- ─── highlights ───────────────────────────────────────────────────────────────
 
--- Namespace for all search range extmarks.
+-- Namespace for all AI extmarks.
 local search_ns = vim.api.nvim_create_namespace 'light-ai-search'
 
 -- Persistent table: absolute filepath → list of { lnum, col, len } (1-based).
--- Accumulates across searches; never cleared automatically.
 ---@type table<string, {lnum:integer, col:integer, len:integer}[]>
-local search_highlights = {}
+local highlights = {}
 
----Applies any pending search highlights to bufnr if its name is in search_highlights.
+---Applies any pending highlights to bufnr if its name is in highlights.
 ---@param bufnr integer
-local function apply_search_highlights(bufnr)
+local function apply_highlights(bufnr)
   local name = vim.api.nvim_buf_get_name(bufnr)
-  local entries = search_highlights[name]
+  local entries = highlights[name]
   if not entries then return end
   for _, e in ipairs(entries) do
     -- lnum/col are 1-based from the agent; nvim_buf_set_extmark expects 0-based.
@@ -60,16 +59,16 @@ local function apply_search_highlights(bufnr)
       priority = 100,
     })
   end
-  log:debug('applied %d search highlight(s) to %s', #entries, name)
+  log:debug('applied %d highlight(s) to %s', #entries, name)
 end
 
----Clears all search highlights from every loaded buffer and resets the table.
-function M.clear_search_highlights()
+---Clears all AI highlights from every loaded buffer and resets the table.
+function M.clear_highlights()
   for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_loaded(bufnr) then vim.api.nvim_buf_clear_namespace(bufnr, search_ns, 0, -1) end
   end
-  search_highlights = {}
-  log:info 'search highlights cleared'
+  highlights = {}
+  log:info 'highlights cleared'
 end
 
 -- ─── Prompts ──────────────────────────────────────────────────────────────────
@@ -89,7 +88,9 @@ NEVER alter any files other than a TEMP_FILE.
 NEVER provide the requested changes as conversational output. Return only the code.
 Read TEMP_FILE before writing, it will be empty.
 ONLY provide requested changes by writing the change to TEMP_FILE.
-After writing TEMP_FILE once you MUST end the session.
+After you write the changes perform a review of the written changes and see
+if you need to change anything.
+ONCE you're done say "Done." and end the session.
 </MustObey>
 ]]
 
@@ -120,6 +121,8 @@ len - how many lines should be highlited
 notes - interesting notes about this location, it can be empty but the comma must be there. Notes can contain any characters including commas, but they cannot contain newlines.
 
 See <Output> for example of locations file.
+
+ONCE you're done with the answer and locations say "Done." and end the session.
 </MustObey>
 <TEMP_FILE>{{temp_file}}</TEMP_FILE>
 <TaskDescription>
@@ -217,6 +220,12 @@ function M.visual_replace()
       vim.api.nvim_buf_set_lines(bufnr, cur_start - 1, cur_end, false, lines)
       log:info('agent #%d: replaced lines %d-%d (%d lines written)', num, cur_start, cur_end, #lines)
       vim.notify(string.format('light-ai: agent #%d finished the job', num), vim.log.levels.INFO)
+
+      -- Highlight the replaced region so it's easy to spot.
+      local fname = vim.api.nvim_buf_get_name(bufnr)
+      if not highlights[fname] then highlights[fname] = {} end
+      table.insert(highlights[fname], { lnum = cur_start, col = 1, len = #lines })
+      apply_highlights(bufnr)
     end)
   end
 
@@ -225,14 +234,62 @@ function M.visual_replace()
   popup.input('AI Prompt', on_prompt_submit, on_prompt_cancel)
 end
 
----Asks for a prompt, runs the search agent, populates the quickfix list with
+---Parses a search agent's temp file content and applies results:
+---populates quickfix, sets search highlights, opens a notes split.
+---@param content string
+---@param title string  Quickfix list title.
+---@param agent_num integer  Used only for log messages.
+local function apply_search_results(content, title, agent_num)
+  M.clear_highlights()
+
+  local parsed = util.parse_locations_file(content)
+  local notes_lines = parsed.notes_lines
+  local qf_items = {}
+
+  for _, loc in ipairs(parsed.locations) do
+    table.insert(qf_items, {
+      filename = loc.filename,
+      lnum = loc.lnum,
+      col = loc.col,
+      text = loc.notes,
+    })
+    if not highlights[loc.filename] then highlights[loc.filename] = {} end
+    table.insert(highlights[loc.filename], { lnum = loc.lnum, col = loc.col, len = loc.len })
+  end
+
+  if #notes_lines > 0 then
+    local notes_buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[notes_buf].buftype = 'nofile'
+    vim.bo[notes_buf].bufhidden = 'wipe'
+    vim.api.nvim_buf_set_lines(notes_buf, 0, -1, false, notes_lines)
+    vim.bo[notes_buf].modifiable = true
+
+    vim.cmd 'split'
+    vim.api.nvim_win_set_buf(0, notes_buf)
+
+    log:info('search agent #%d: opened notes buffer with %d lines', agent_num, #notes_lines)
+  end
+
+  if #qf_items == 0 then
+    log:error('search agent #%d: no parseable locations found', agent_num)
+    vim.notify('light-ai: search returned no locations', vim.log.levels.WARN)
+  else
+    vim.fn.setqflist({}, ' ', { title = title, items = qf_items })
+    log:info('search agent #%d: populated quickfix with %d items', agent_num, #qf_items)
+
+    for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(bufnr) then apply_highlights(bufnr) end
+    end
+
+    vim.cmd 'Trouble quickfix open'
+  end
+end
+
 ---the locations found, and opens a readonly scratch buffer in a horizontal
 ---split containing the agent's notes.
 function M.search()
   local function on_prompt_submit(user_prompt)
     log:info('search: prompt captured (length=%d), spawning agent', #user_prompt)
-
-    M.clear_search_highlights()
 
     local run_id = util.random_string(8)
 
@@ -262,48 +319,7 @@ function M.search()
 
       if status ~= 'done' then return end
 
-      local parsed = util.parse_locations_file(content)
-      local notes_lines = parsed.notes_lines
-      local qf_items = {}
-
-      for _, loc in ipairs(parsed.locations) do
-        table.insert(qf_items, {
-          filename = loc.filename,
-          lnum = loc.lnum,
-          col = loc.col,
-          text = loc.notes,
-        })
-        if not search_highlights[loc.filename] then search_highlights[loc.filename] = {} end
-        table.insert(search_highlights[loc.filename], { lnum = loc.lnum, col = loc.col, len = loc.len })
-      end
-
-      if #notes_lines > 0 then
-        local notes_buf = vim.api.nvim_create_buf(false, true)
-        vim.bo[notes_buf].buftype = 'nofile'
-        vim.bo[notes_buf].bufhidden = 'wipe'
-        vim.api.nvim_buf_set_lines(notes_buf, 0, -1, false, notes_lines)
-        vim.bo[notes_buf].modifiable = true
-
-        vim.cmd 'split'
-        vim.api.nvim_win_set_buf(0, notes_buf)
-
-        log:info('search agent #%d: opened notes buffer with %d lines', num, #notes_lines)
-      end
-
-      if #qf_items == 0 then
-        log:error('search agent #%d: no parseable locations found', num)
-        vim.notify('light-ai: search returned no locations', vim.log.levels.WARN)
-      else
-        vim.fn.setqflist({}, ' ', { title = 'AI Search: ' .. user_prompt, items = qf_items })
-        log:info('search agent #%d: populated quickfix with %d items', num, #qf_items)
-
-        -- Apply highlights to any matching buffers already open.
-        for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-          if vim.api.nvim_buf_is_loaded(bufnr) then apply_search_highlights(bufnr) end
-        end
-
-        vim.cmd 'Trouble quickfix open'
-      end
+      apply_search_results(content, 'AI Search: ' .. user_prompt, num)
     end)
   end
 
@@ -335,7 +351,6 @@ function M.preview_agents()
   local pickers = require 'telescope.pickers'
   local finders = require 'telescope.finders'
   local conf = require('telescope.config').values
-  local previewers = require 'telescope.previewers'
 
   if #state.agents == 0 then
     vim.notify('light-ai: no agents have been run this session', vim.log.levels.INFO)
@@ -361,22 +376,7 @@ function M.preview_agents()
         end,
       },
       sorter = conf.generic_sorter {},
-      previewer = previewers.new_buffer_previewer {
-        title = 'Agent Output',
-        define_preview = function(self, entry)
-          local agent = entry.value
-          local lines
-          if agent.temp_file then
-            local fh = io.open(agent.temp_file, 'r')
-            if fh then
-              local content = fh:read '*a'
-              fh:close()
-              lines = vim.split(content, '\n', { plain = true })
-            end
-          end
-          vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines or { '(no output)' })
-        end,
-      },
+      previewer = conf.file_previewer {},
     })
     :find()
 end
@@ -386,7 +386,6 @@ function M.pick_logs()
   local pickers = require 'telescope.pickers'
   local finders = require 'telescope.finders'
   local conf = require('telescope.config').values
-  local previewers = require 'telescope.previewers'
 
   if #state.agents == 0 then
     vim.notify('light-ai: no agents have been run this session', vim.log.levels.INFO)
@@ -412,27 +411,103 @@ function M.pick_logs()
         end,
       },
       sorter = conf.generic_sorter {},
-      previewer = previewers.new_buffer_previewer {
-        title = 'Agent Log',
-        define_preview = function(self, entry)
-          local agent = entry.value
-          local fh = io.open(agent:log_file(), 'r')
-          local lines
-          if fh then
-            local content = fh:read '*a'
-            fh:close()
-            lines = vim.split(content, '\n', { plain = true })
-          end
-          vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, false, lines or { '(no log)' })
+      previewer = conf.file_previewer {},
+    })
+    :find()
+end
+
+---Re-applies the results of a past search agent by its index in state.agents (1-based).
+---Errors if the agent does not exist, is not of kind "search", or is not done.
+---You can pass a negative number to search from the end of the list, eg. (-1 for last agent).
+---@param idx integer
+function M.restore_search(idx)
+  if idx < 0 then idx = #state.agents + idx + 1 end
+  local agent = state.agents[idx]
+  if not agent then
+    vim.notify(string.format('light-ai: no #%d agent', idx), vim.log.levels.ERROR)
+    return
+  end
+  if agent.kind ~= 'search' then
+    vim.notify(string.format('light-ai: agent #%d is not a search agent', agent.num), vim.log.levels.ERROR)
+    return
+  end
+  if agent.status ~= 'done' then
+    vim.notify(string.format('light-ai: agent #%d is not done (status: %s)', agent.num, agent.status), vim.log.levels.ERROR)
+    return
+  end
+
+  local content = util.read_file(agent.temp_file)
+  if not content then
+    vim.notify('light-ai: could not read temp file for search #' .. agent.num, vim.log.levels.ERROR)
+    return
+  end
+
+  local title = 'AI Search: ' .. (agent.user_prompt or '(no prompt)')
+  log:info('restore_search: restoring agent #%d (%s)', agent.num, title)
+  apply_search_results(content, title, agent.num)
+end
+
+---Opens a Telescope picker listing all completed search agents.
+---Selecting one restores its quickfix list, highlights, and notes.
+function M.pick_searches()
+  local pickers = require 'telescope.pickers'
+  local finders = require 'telescope.finders'
+  local conf = require('telescope.config').values
+  local actions = require 'telescope.actions'
+  local action_state = require 'telescope.actions.state'
+
+  local searches = {}
+  for _, agent in ipairs(state.agents) do
+    if agent.kind == 'search' and agent.status == 'done' then table.insert(searches, agent) end
+  end
+
+  if #searches == 0 then
+    vim.notify('light-ai: no completed search results this session', vim.log.levels.INFO)
+    return
+  end
+
+  pickers
+    .new({}, {
+      prompt_title = 'AI Search Results',
+      finder = finders.new_table {
+        results = searches,
+        entry_maker = function(agent)
+          local prompt_preview = agent.user_prompt and agent.user_prompt:gsub('\n', ' ') or '(no prompt)'
+          local display = string.format('#%d  %s', agent.num, prompt_preview)
+          return {
+            value = agent,
+            display = display,
+            ordinal = display,
+            filename = agent.temp_file,
+            lnum = 1,
+            col = 1,
+          }
         end,
       },
+      sorter = conf.generic_sorter {},
+      previewer = conf.file_previewer {},
+      attach_mappings = function(prompt_bufnr, _)
+        actions.select_default:replace(function()
+          local entry = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+          if not entry then return end
+          local agent = entry.value
+          local content = util.read_file(agent.temp_file)
+          if not content then
+            vim.notify('light-ai: could not read temp file for search #' .. agent.num, vim.log.levels.ERROR)
+            return
+          end
+          local title = 'AI Search: ' .. (agent.user_prompt or '(no prompt)')
+          log:info('pick_searches: restoring agent #%d', agent.num)
+          apply_search_results(content, title, agent.num)
+        end)
+        return true
+      end,
     })
     :find()
 end
 
 -- ─── setup ────────────────────────────────────────────────────────────────────
-
----Returns a shallow copy of the current plugin configuration.
 ---@return LightAiConfig
 function M.get_config() return { provider = config.provider, model = config.model, temp_dir = config.temp_dir } end
 
@@ -452,11 +527,11 @@ function M.setup(opts)
   config.temp_dir = opts.temp_dir
   state.spinner_manager = popup.SpinnerManager.new(state.agents)
 
-  -- Highlight search result ranges whenever a file buffer is displayed.
-  vim.api.nvim_create_augroup('LightAiSearch', { clear = true })
+  -- Apply highlights whenever a file buffer is displayed.
+  vim.api.nvim_create_augroup('LightAiHighlights', { clear = true })
   vim.api.nvim_create_autocmd('BufWinEnter', {
-    group = 'LightAiSearch',
-    callback = function(ev) apply_search_highlights(ev.buf) end,
+    group = 'LightAiHighlights',
+    callback = function(ev) apply_highlights(ev.buf) end,
   })
 end
 

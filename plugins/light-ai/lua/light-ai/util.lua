@@ -121,4 +121,17 @@ function M.parse_locations_file(content)
   return { locations = locations, notes_lines = notes_lines }
 end
 
+---Reads a file and returns its content, or nil if the file cannot be opened
+---or its content is empty.
+---@param path string
+---@return string|nil
+function M.read_file(path)
+  local fh = io.open(path, 'r')
+  if not fh then return nil end
+  local content = fh:read '*a'
+  fh:close()
+  if not content or vim.trim(content) == '' then return nil end
+  return content
+end
+
 return M

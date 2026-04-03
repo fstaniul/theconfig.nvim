@@ -1,3 +1,6 @@
+-- local DONE_SENTINEL = 'wrote.+file.+success'
+local DONE_SENTINEL = 'done'
+
 ---@class SelectionRange
 ---@field start_line integer  1-indexed start line of the selection.
 ---@field end_line integer    1-indexed end line of the selection.
@@ -78,6 +81,7 @@ function AgentProvider:new() return setmetatable({}, self) end
 
 local Logger = require 'light-ai.logging'
 local Path = require 'plenary.path'
+local util = require 'light-ai.util'
 
 ---@alias AgentStatus "idle" | "running" | "done" | "aborted" | "error"
 ---@alias AgentKind "code" | "search"
@@ -177,24 +181,10 @@ function Agent:run(prompt, context, on_done)
 
   self.log:info('temp_file=%s, prompt_file=%s', tmp_file, prompt_file)
 
-  local function read_temp_file()
-    local rfh = io.open(tmp_file, 'r')
-    if not rfh then
-      self.log:error('could not open temp file %s', tmp_file)
-      return nil
-    end
-    local content = rfh:read '*a'
-    rfh:close()
-    if not content or vim.trim(content) == '' then
-      self.log:error('temp file is empty %s', tmp_file)
-      return nil
-    end
-    return content
-  end
-
   local function finish()
-    local content = read_temp_file()
+    local content = util.read_file(tmp_file)
     if not content then
+      self.log:error('temp file is empty or unreadable: %s', tmp_file)
       self.status = 'error'
       vim.notify(string.format('light-ai: agent #%d (%s) returned empty output', self.num, self.kind), vim.log.levels.ERROR)
       on_done('error', nil)
@@ -215,7 +205,7 @@ function Agent:run(prompt, context, on_done)
     on_stdout = function(_, data)
       for _, line in ipairs(data) do
         self.log:debug('stdout: %s', line)
-        if self.status == 'running' and line:lower():find 'wrote.+file.+success' then
+        if self.status == 'running' and line:lower():find(DONE_SENTINEL) then
           self.log:info 'detected success sentinel, stopping job'
           self.status = 'done'
           vim.fn.jobstop(self._job_id)
