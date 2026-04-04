@@ -78,19 +78,10 @@ vim.keymap.set('n', '<leader>fY', function()
   vim.notify('Yanked absolute path: ' .. path)
 end, { desc = '[Yank] absolute [F]ile path' })
 
--- Better cutting, pasting and deleting, so that we don't lose yank!
-vim.keymap.set('v', 'p', '"_p', { desc = 'Paste' })
-vim.keymap.set('v', 'P', '"_P', { desc = 'Paste' })
-
-vim.keymap.set('v', 'c', '"_c', { desc = 'Change' })
-vim.keymap.set('n', 'cc', '"_cc', { desc = 'Change line' })
-vim.keymap.set('n', 'C', '"_C', { desc = 'Change till EOL' })
-
-vim.keymap.set('n', 'dd', '"_dd', { desc = 'Delete line' })
-vim.keymap.set('v', 'd', '"_d', { desc = 'Delete' })
-vim.keymap.set('n', 'D', '"_D', { desc = 'Delete till EOL' })
-
-vim.keymap.set('n', 'S', '"_S', { desc = 'Replace current line' })
+vim.keymap.set('x', '<leader>p', '"_dp', { desc = 'Paste without cutting', silent = true })
+vim.keymap.set('x', '<leader>d', '"_d', { desc = 'Delete without cutting', silent = true })
+vim.keymap.set('n', '<leader>D', '"_D', { desc = 'Delete till EOL without cutting', silent = true })
+vim.keymap.set('n', '<leader>dd', '"_dd', { desc = 'Delete line without cutting', silent = true })
 
 -- Yank into 0 and 1 registers (so that we can keep history)
 local mirror_reg_01 = function() vim.fn.setreg('1', vim.fn.getreg '0') end
@@ -99,10 +90,5 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   callback = mirror_reg_01,
 })
 vim.api.nvim_create_user_command('MReg01', mirror_reg_01, { desc = 'Mirror contents of a register 0 to 1' })
-
--- Cut (all cut operations move to register 1)
-vim.keymap.set('n', 'X', 'D<esc><cmd>MReg01<cr>', { desc = 'Cut to the end of the line', silent = true })
-vim.keymap.set('n', 'xx', 'dd<esc><cmd>MReg01<cr>', { desc = 'Cut the line', silent = true })
-vim.keymap.set('v', 'x', 'd<esc><cmd>MReg01<cr>', { desc = 'Cut selected text', silent = true })
 
 -- vim: ts=2 sts=2 sw=2 et

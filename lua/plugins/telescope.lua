@@ -170,7 +170,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
     vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
     vim.keymap.set('n', '<leader>sf', find_files_from_project_git_root, { desc = '[S]earch [F]iles' })
     vim.keymap.set('n', '<leader>st', builtin.treesitter, { desc = '[S]earch [T]reesitter symbols' })
-    vim.keymap.set('n', '<C-P>', git_files_with_fallback, { desc = 'Search git files' })
+    vim.keymap.set('n', '<C-P>', find_files_from_project_git_root, { desc = 'Search git files' })
     vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
     vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = '[S]earch [B]uffers' })
     vim.keymap.set({ 'n', 'v' }, '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
@@ -179,6 +179,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
     vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
     vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
     vim.keymap.set('n', '<leader>so', builtin.oldfiles, { desc = '[S]earch Recent [O]ld Files' })
+    vim.keymap.set('n', '<leader>sp', builtin.registers, { desc = '[Search] Registers to [P]aste' })
     vim.keymap.set(
       'n',
       '<leader>sa',
@@ -230,13 +231,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
     })
 
     -- Override default behavior and theme when searching
-    vim.keymap.set('n', '<leader>/', function()
-      -- You can pass additional configuration to Telescope to change the theme, layout, etc.
-      builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
-        winblend = 10,
-        previewer = false,
-      })
-    end, { desc = '[/] Fuzzily search in current buffer' })
+    vim.keymap.set('n', '<leader>/', function() builtin.current_buffer_fuzzy_find() end, { desc = '[/] Fuzzily search in current buffer' })
 
     -- It's also possible to pass additional configuration options.
     --  See `:help telescope.builtin.live_grep()` for information about particular keys
