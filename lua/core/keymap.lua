@@ -42,12 +42,6 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 -- or just use <C-\><C-n> to exit terminal mode
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
--- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
-
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
 --
@@ -62,11 +56,6 @@ vim.keymap.set('n', '<C-S-h>', '<C-w>H', { desc = 'Move window to the left' })
 vim.keymap.set('n', '<C-S-l>', '<C-w>L', { desc = 'Move window to the right' })
 vim.keymap.set('n', '<C-S-j>', '<C-w>J', { desc = 'Move window to the lower' })
 vim.keymap.set('n', '<C-S-k>', '<C-w>K', { desc = 'Move window to the upper' })
-
--- Actions into not existing register, so that we won't copy it over
-vim.keymap.set({ 'n' }, '<leader>D', '"_D', { desc = 'Delete into void register' })
-vim.keymap.set({ 'v' }, '<leader>d', '"_d', { desc = 'Delete into void register' })
-vim.keymap.set({ 'n' }, '<leader>dd', '"_dd', { desc = 'Delete into void register' })
 
 -- Move up and down in visual mode with J and K
 vim.keymap.set({ 'v' }, 'K', ":m'<-2<CR>gv=`>my`<mzgv`yo`z", { desc = 'Move lines one line up' })
@@ -88,5 +77,32 @@ vim.keymap.set('n', '<leader>fY', function()
   vim.fn.setreg('+', path)
   vim.notify('Yanked absolute path: ' .. path)
 end, { desc = '[Yank] absolute [F]ile path' })
+
+-- Better cutting, pasting and deleting, so that we don't lose yank!
+vim.keymap.set('v', 'p', '"_p', { desc = 'Paste' })
+vim.keymap.set('v', 'P', '"_P', { desc = 'Paste' })
+
+vim.keymap.set('v', 'c', '"_c', { desc = 'Change' })
+vim.keymap.set('n', 'cc', '"_cc', { desc = 'Change line' })
+vim.keymap.set('n', 'C', '"_C', { desc = 'Change till EOL' })
+
+vim.keymap.set('n', 'dd', '"_dd', { desc = 'Delete line' })
+vim.keymap.set('v', 'd', '"_d', { desc = 'Delete' })
+vim.keymap.set('n', 'D', '"_D', { desc = 'Delete till EOL' })
+
+vim.keymap.set('n', 'S', '"_S', { desc = 'Replace current line' })
+
+-- Yank into 0 and 1 registers (so that we can keep history)
+local mirror_reg_01 = function() vim.fn.setreg('1', vim.fn.getreg '0') end
+vim.api.nvim_create_autocmd('TextYankPost', {
+  pattern = '*',
+  callback = mirror_reg_01,
+})
+vim.api.nvim_create_user_command('MReg01', mirror_reg_01, { desc = 'Mirror contents of a register 0 to 1' })
+
+-- Cut (all cut operations move to register 1)
+vim.keymap.set('n', 'X', 'D<esc><cmd>MReg01<cr>', { desc = 'Cut to the end of the line', silent = true })
+vim.keymap.set('n', 'xx', 'dd<esc><cmd>MReg01<cr>', { desc = 'Cut the line', silent = true })
+vim.keymap.set('v', 'x', 'd<esc><cmd>MReg01<cr>', { desc = 'Cut selected text', silent = true })
 
 -- vim: ts=2 sts=2 sw=2 et

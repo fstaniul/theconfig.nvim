@@ -7,10 +7,13 @@ return {
       local hop = require 'hop'
       hop.setup(opts)
 
+      local create_cmd = vim.api.nvim_create_user_command
+
       -- Create custom command for hopping to character/word matches
-      vim.api.nvim_create_user_command('HopEasyMotion', function()
+      create_cmd('HopEasyMotion', function()
         local char = vim.fn.getchar()
         -- Convert numeric char code to string
+        ---@type string
         char = type(char) == 'number' and vim.fn.nr2char(char) or char
 
         -- Create pattern based on input character type
@@ -47,6 +50,30 @@ return {
       { ';f', '<cmd>HopNodes<cr>', desc = 'Hop to node', mode = { 'v', 'n' } },
       { ';s', '<cmd>HopPatternMW<cr>', desc = 'Hop to pattern', mode = { 'v', 'n' } },
       { ';j', '<cmd>HopVertical<cr>', desc = 'Hop to location vertically', mode = { 'v', 'n' } },
+      -- {
+      --   'f',
+      --   function() require('hop').hint_char1 { direction = require('hop.hint').HintDirection.AFTER_CURSOR, current_line_only = true } end,
+      --   desc = 'Hop [f]',
+      --   mode = '',
+      -- },
+      -- {
+      --   'F',
+      --   function() require('hop').hint_char1 { direction = require('hop.hint').HintDirection.BEFORE_CURSOR, current_line_only = true } end,
+      --   desc = 'Hop [F]',
+      --   mode = '',
+      -- },
+      -- {
+      --   't',
+      --   function() require('hop').hint_char1 { direction = require('hop.hint').HintDirection.AFTER_CURSOR, current_line_only = true, hint_offset = -1 } end,
+      --   desc = 'Hop [t]',
+      --   mode = '',
+      -- },
+      -- {
+      --   'T',
+      --   function() require('hop').hint_char1 { direction = require('hop.hint').HintDirection.BEFORE_CURSOR, current_line_only = true, hint_offset = -1 } end,
+      --   desc = 'Hop [T]',
+      --   mode = '',
+      -- },
     },
   },
 }

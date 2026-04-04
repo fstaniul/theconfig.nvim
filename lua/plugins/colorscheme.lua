@@ -6,6 +6,19 @@ local function isSelected(name) return name == selected_theme end
 -- (default: false). When true, floating window borders have a foreground colour and background colour is the same as Normal. When false, floating window borders have no foreground colour and background colour is the same as popup menus.
 vim.g.alabaster_floatborder = true
 
+local function overwrite(spec, path, url)
+  local s = {}
+
+  local fs = vim.uv.fs_stat(path)
+  if fs and fs.type == 'directory' then
+    s.dir = path
+  else
+    s.url = url
+  end
+
+  return vim.tbl_deep_extend('force', s, spec)
+end
+
 ---@type LazyPluginSpec[]
 local themes = {
   {
@@ -30,16 +43,15 @@ local themes = {
       vim.cmd 'colorscheme github_dark'
     end,
   },
-  {
-    -- https://github.com/dchinmay2/alabaster.nvim
+  overwrite({
     '~p00f/alabaster.nvim',
     name = 'alabaster',
-    dir = '~/Work/alabaster.nvim',
+    enabled = not local_alabaster,
     config = function()
       vim.cmd [[set termguicolors]]
       vim.cmd [[colorscheme alabaster]]
     end,
-  },
+  }, '~/alabaster.nvim', 'https://git.sr.ht/~p00f/alabaster.nvim'),
 }
 
 ---@module 'lazy'
@@ -53,6 +65,7 @@ for _, spec in ipairs(themes) do
     lazy = false,
     enabled = isSelected(spec.name),
   }
+
   spec = vim.tbl_deep_extend('force', additional, spec)
   table.insert(config, spec)
 end
