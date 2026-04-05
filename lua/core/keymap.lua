@@ -66,13 +66,13 @@ vim.api.nvim_create_autocmd('FileType', {
   callback = function() vim.keymap.set({ 'n' }, '<leader>X', ':source %<CR>', { desc = 'Source current buffer', buffer = true, silent = true }) end,
 })
 
-vim.keymap.set('n', '<leader>fy', function()
+vim.keymap.set('n', '<leader>yf', function()
   local path = vim.fn.expand '%'
   vim.fn.setreg('+', path)
   vim.notify('Yanked relative path: ' .. path)
 end, { desc = '[Y]ank relative [F]ile path' })
 
-vim.keymap.set('n', '<leader>fY', function()
+vim.keymap.set('n', '<leader>yF', function()
   local path = vim.fn.expand '%:p'
   vim.fn.setreg('+', path)
   vim.notify('Yanked absolute path: ' .. path)
