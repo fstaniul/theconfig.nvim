@@ -3,6 +3,6 @@ test.sh
 .luarc.json
 nvim
 
-lua/core/local_options.lua
+lua/core/options_local.lua
 
 .DS_Store
