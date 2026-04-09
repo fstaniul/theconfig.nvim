@@ -7,7 +7,11 @@ vim.keymap.set({ 'n', 'v' }, 'k', 'gk')
 
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
-vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+vim.keymap.set('n', '<Esc>', function()
+  vim.cmd [[nohlsearch]]
+  local ok, ai = pcall(require, 'light-ai')
+  if ok then ai.clear_highlights() end
+end)
 
 -- Stop capital J from joining the next line to the current one, which is the default behavior of J.
 vim.keymap.set({ 'n', 'v' }, 'J', 'j')

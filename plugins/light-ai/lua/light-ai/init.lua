@@ -183,7 +183,25 @@ function M.visual_replace()
     log:info('prompt captured (length=%d), spawning agent', #user_prompt)
 
     local run_id = util.random_string(8)
-    local ns, mark_start, mark_end = util.set_selection_marks(bufnr, run_id, start_line, start_col, end_line, end_col)
+
+    local num = #state.agents + 1
+    local agent = agents_mod.Agent.new(num, run_id, 'code', config.provider, PromptProvider.new(visual_replace_prompt))
+
+    ---@type vim.api.keyset.set_extmark
+    local start_opts = {
+      virt_lines = {
+        { string.format('┌ #%d implementing…', num), 'Comment' },
+      },
+      virt_lines_above = true,
+    }
+    ---@type vim.api.keyset.set_extmark
+    local end_opts = {
+      virt_lines = {
+        { '└ End', 'Comment' },
+      },
+      virt_lines_above = false,
+    }
+    local ns, mark_start, mark_end = util.set_selection_marks(bufnr, run_id, start_line, start_col, end_line, end_col, start_opts, end_opts)
     log:info('extmarks set: start=%d end=%d (ns=light-ai-%s)', mark_start, mark_end, run_id)
 
     ---@type AgentContext
@@ -202,9 +220,6 @@ function M.visual_replace()
       },
       user_prompt = user_prompt,
     }
-
-    local num = #state.agents + 1
-    local agent = agents_mod.Agent.new(num, run_id, 'code', config.provider, PromptProvider.new(visual_replace_prompt))
 
     table.insert(state.agents, agent)
     log:info('agent #%d created (id=%s), log=%s', num, agent.id, agent:log_file())
