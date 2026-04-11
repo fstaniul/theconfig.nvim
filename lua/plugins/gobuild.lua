@@ -1,7 +1,8 @@
 return {
+  'fstaniul/build.nvim',
   dependencies = { 'folke/snacks.nvim' },
   name = 'gobuild',
-  dir = '~/.config/nvim/plugins/gobuild',
+  dir = '~/build.nvim',
   opts = {},
   keys = {
     { '<leader>bg', ':GoBuild<CR>', desc = '[B]uild [G]o' },

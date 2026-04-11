@@ -1,6 +1,6 @@
 return {
-  name = 'fstaniul/light-ai.nvim',
-  dir = '~/.config/nvim/plugins/light-ai',
+  'fstaniul/light-ai.nvim',
+  dir = '~/light-ai',
   dependencies = {
     'MunifTanjim/nui.nvim',
     'nvim-lua/plenary.nvim',
