@@ -18,13 +18,10 @@ return {
         'markdown',
         'markdown_inline',
         'query',
-        'vim',
-        'vimdoc',
         'go',
         'yaml',
         'typescript',
         'javascript',
-        'svelte',
       }
       require('nvim-treesitter').install(parsers)
       vim.api.nvim_create_autocmd('FileType', {
