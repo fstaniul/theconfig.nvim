@@ -96,4 +96,7 @@ vim.o.colorcolumn = '80,144'
 vim.opt.spelllang = 'en_us'
 vim.opt.spell = true
 
+-- Enable mouse support for all modes in nvim
+vim.o.mouse = 'a'
+
 -- vim: ts=2 sts=2 sw=2 et

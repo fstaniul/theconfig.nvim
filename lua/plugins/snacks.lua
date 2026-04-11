@@ -40,7 +40,7 @@ return {
           {
             pane = 2,
             section = 'terminal',
-            cmd = vim.fn.executable 'colorscript' == 1 and 'colorscript -e fade' or '',
+            cmd = vim.fn.executable 'colorscript' == 1 and 'colorscript -e fade' or 'echo "colorscript not installed"',
             height = 5,
             padding = 1,
           },
