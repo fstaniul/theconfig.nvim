@@ -33,5 +33,15 @@ return {
       '<cmd>Trouble quickfix toggle<cr>',
       desc = 'Quickfix List (Trouble)',
     },
+    {
+      ']t',
+      function() require('trouble').next { skip_groups = true, jump = true } end,
+      desc = 'Next [T]rouble Item',
+    },
+    {
+      '[t',
+      function() require('trouble').prev { skip_groups = true, jump = true } end,
+      desc = 'Prev [T]rouble Item',
+    },
   },
 }

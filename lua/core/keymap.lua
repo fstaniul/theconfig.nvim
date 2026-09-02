@@ -95,4 +95,35 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 })
 vim.api.nvim_create_user_command('MReg01', mirror_reg_01, { desc = 'Mirror contents of a register 0 to 1' })
 
+-- File operations
+vim.keymap.set('n', '<leader>Fp', function()
+  local path = vim.fn.expand '%'
+  vim.fn.setreg('+', path)
+  print('Copied path to clipboard: ' .. path)
+end, { desc = 'copy relative path' })
+vim.keymap.set('n', '<leader>FP', function()
+  local path = vim.fn.expand '%:p'
+  vim.fn.setreg('+', path)
+  print('Copied path to clipboard: ' .. path)
+end, { desc = 'copy absolute path' })
+
+-- Git operations
+vim.keymap.set('n', '<leader>Go', function() require('snacks').gitbrowse() end, { desc = '[O]pen file in browser' })
+vim.keymap.set('n', '<leader>Gr', function() vim.system({ 'gh', 'browse' }, { detach = true }) end, { desc = 'Open [r]epository' })
+vim.keymap.set('n', '<leader>Gp', function() vim.system({ 'gh', 'pr', 'view', '--web' }, { detach = true }) end, { desc = 'Open [p]ull request' })
+
+local function next_conflict()
+  if vim.fn.search('^<<<<<<< .*$', 'W') == 0 then print 'No more conflicts found' end
+end
+
+local function prev_conflict()
+  if vim.fn.search('^<<<<<<< .*$', 'bW') == 0 then print 'No conflicts found' end
+end
+
+vim.keymap.set('n', ']c', next_conflict, { noremap = true, silent = false, desc = 'next git conflict' })
+vim.keymap.set('n', '[c', prev_conflict, { noremap = true, silent = false, desc = 'prev git conflict' })
+
+vim.keymap.set('n', 'gj', require('core.more.test-toggle').toggle, { desc = 'Toggle to test/source file (must exist)' })
+vim.keymap.set('n', 'gJ', require('core.more.test-toggle').toggle_force, { desc = 'Toggle to test/source file (create if missing)' })
+
 -- vim: ts=2 sts=2 sw=2 et

@@ -52,10 +52,43 @@ return { -- Fuzzy Finder (files, lsp, etc)
 
     -- [[ Configure Telescope ]]
     -- See `:help telescope` and `:help telescope.setup()`
-    local open_with_trouble = require('trouble.sources.telescope').open
 
-    -- Use this to add more results without clearing the trouble list
-    local add_to_trouble = require('trouble.sources.telescope').add
+    -- this clears the trouble list and adds the selected elements,
+    -- for convenience it also opens the selected file by calling select
+
+    -- This function adds items to the trouble list from telescope picker
+    -- see: https://github.com/folke/trouble.nvim/blob/main/lua/trouble/sources/telescope.lua
+    local add_to_trouble = function(prompt_bufnr)
+      local Util = require 'trouble.util'
+      local action_state = require 'telescope.actions.state'
+      local T = require 'trouble.sources.telescope'
+
+      ---@type Picker
+      local picker = action_state.get_current_picker(prompt_bufnr)
+      if not picker then return Util.error 'No Telescope picker found?' end
+
+      if #picker:get_multi_selection() > 0 then
+        for _, item in ipairs(picker:get_multi_selection()) do
+          table.insert(T.items, T.item(item))
+        end
+      else
+        for item in picker.manager:iter() do
+          table.insert(T.items, T.item(item))
+        end
+      end
+
+      vim.schedule(function()
+        require('telescope.actions').select_default(prompt_bufnr)
+        require('trouble').open { mode = T.mode() }
+      end)
+    end
+
+    -- This function clears the old list, adds current results, and opens the file
+    local open_with_trouble = function(prompt_bufnr)
+      local T = require 'trouble.sources.telescope'
+      T.items = {}
+      add_to_trouble(prompt_bufnr)
+    end
 
     require('telescope').setup {
       defaults = {
@@ -170,7 +203,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
     vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
     vim.keymap.set('n', '<leader>sf', find_files_from_project_git_root, { desc = '[S]earch [F]iles' })
     vim.keymap.set('n', '<leader>st', builtin.treesitter, { desc = '[S]earch [T]reesitter symbols' })
-    vim.keymap.set('n', '<C-P>', find_files_from_project_git_root, { desc = 'Search git files' })
+    vim.keymap.set('n', '<C-P>', git_files_with_fallback, { desc = 'Search git files' })
     vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
     vim.keymap.set('n', '<leader>sb', builtin.buffers, { desc = '[S]earch [B]uffers' })
     vim.keymap.set({ 'n', 'v' }, '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
@@ -195,6 +228,7 @@ return { -- Fuzzy Finder (files, lsp, etc)
     )
     vim.keymap.set('n', '<leader>s.', function() builtin.find_files { cwd = vim.fn.expand '%:p:h' } end, { desc = '[S]earch In Current Directory' })
     vim.keymap.set('n', '<leader>sc', builtin.commands, { desc = '[S]earch [C]ommands' })
+    vim.keymap.set('n', '<leader>gs', function() require('telescope.builtin').git_status() end, { noremap = true, desc = 'Telescope [G]it [S]tatus' })
 
     -- This runs on LSP attach per buffer (see main LSP attach function in 'neovim/nvim-lspconfig' config for more info,
     -- it is better explained there). This allows easily switching between pickers if you prefer using something else!

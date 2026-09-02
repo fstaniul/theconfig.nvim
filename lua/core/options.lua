@@ -99,4 +99,8 @@ vim.opt.spell = true
 -- Enable mouse support for all modes in nvim
 vim.o.mouse = 'a'
 
+-- Set the filler character (for diffs, default -)
+-- vim.opt.fillchars:append { diff = " " }
+vim.opt.fillchars:append { diff = '╱' }
+
 -- vim: ts=2 sts=2 sw=2 et

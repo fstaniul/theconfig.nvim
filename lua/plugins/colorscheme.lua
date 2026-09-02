@@ -19,6 +19,7 @@ local function overwrite(spec, path, url)
   return vim.tbl_deep_extend('force', s, spec)
 end
 
+---module 'lazy'
 ---@type LazyPluginSpec[]
 local themes = {
   {
@@ -43,15 +44,15 @@ local themes = {
       vim.cmd 'colorscheme github_dark'
     end,
   },
-  overwrite({
-    '~p00f/alabaster.nvim',
+  -- see https://git.sr.ht/~p00f/alabaster.nvim
+  {
+    dir = '~/highcontext.nvim',
     name = 'alabaster',
-    enabled = not local_alabaster,
     config = function()
       vim.cmd [[set termguicolors]]
       vim.cmd [[colorscheme alabaster]]
     end,
-  }, '~/alabaster.nvim', 'https://git.sr.ht/~p00f/alabaster.nvim'),
+  },
 }
 
 ---@module 'lazy'

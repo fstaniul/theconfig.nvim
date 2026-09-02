@@ -28,6 +28,8 @@ return {
         { '<leader>s', group = '[S]earch', mode = { 'n', 'v' } },
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+        { '<leader>F', group = '[F]ile', mode = { 'n' } },
+        { '<leader>G', group = '[G]it', mode = { 'n' } },
         { 'gr', group = 'LSP Actions', mode = { 'n' } },
       },
     },

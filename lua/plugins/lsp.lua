@@ -63,6 +63,8 @@ return {
             vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = 'LSP: ' .. desc })
           end
 
+          map('K', function() vim.lsp.buf.hover { border = 'rounded' } end, 'Hover Documentation')
+
           -- Rename the variable under your cursor.
           --  Most Language Servers support renaming across files, etc.
           map('grn', vim.lsp.buf.rename, '[R]e[n]ame')
@@ -111,6 +113,11 @@ return {
           if client and client:supports_method('textDocument/inlayHint', event.buf) then
             map('<leader>th', function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf }) end, '[T]oggle Inlay [H]ints')
           end
+
+          -- Some nicer border around diagnostic styling
+          vim.diagnostic.config {
+            float = { border = 'rounded' },
+          }
         end,
       })
 
@@ -152,6 +159,7 @@ return {
         stylua = {}, -- Used to format Lua code
 
         tsgo = {},
+        denols = {},
         oxlint = {},
         eslint = {},
 
