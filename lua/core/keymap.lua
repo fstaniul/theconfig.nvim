@@ -112,18 +112,47 @@ vim.keymap.set('n', '<leader>Go', function() require('snacks').gitbrowse() end, 
 vim.keymap.set('n', '<leader>Gr', function() vim.system({ 'gh', 'browse' }, { detach = true }) end, { desc = 'Open [r]epository' })
 vim.keymap.set('n', '<leader>Gp', function() vim.system({ 'gh', 'pr', 'view', '--web' }, { detach = true }) end, { desc = 'Open [p]ull request' })
 
-local function next_conflict()
-  if vim.fn.search('^<<<<<<< .*$', 'W') == 0 then print 'No more conflicts found' end
-end
-
-local function prev_conflict()
-  if vim.fn.search('^<<<<<<< .*$', 'bW') == 0 then print 'No conflicts found' end
-end
-
-vim.keymap.set('n', ']c', next_conflict, { noremap = true, silent = false, desc = 'next git conflict' })
-vim.keymap.set('n', '[c', prev_conflict, { noremap = true, silent = false, desc = 'prev git conflict' })
-
 vim.keymap.set('n', 'gj', require('core.more.test-toggle').toggle, { desc = 'Toggle to test/source file (must exist)' })
 vim.keymap.set('n', 'gJ', require('core.more.test-toggle').toggle_force, { desc = 'Toggle to test/source file (create if missing)' })
+
+-- Toggle diffview open/close
+vim.keymap.set('n', '<leader>dv', '<cmd>DiffviewToggle<cr>', { desc = 'Toggle Diffview' })
+
+-- Diff working directory
+vim.keymap.set('n', '<leader>do', '<cmd>DiffviewOpen<cr>', { desc = 'Diffview open' })
+vim.keymap.set('n', '<leader>dc', '<cmd>DiffviewClose<cr>', { desc = 'Diffview close' })
+
+-- File history
+vim.keymap.set('n', '<leader>dh', '<cmd>DiffviewFileHistory %<cr>', { desc = 'File history (current file)' })
+vim.keymap.set('n', '<leader>dH', '<cmd>DiffviewFileHistory<cr>', { desc = 'File history (repo)' })
+
+-- Visual mode: history for selection
+vim.keymap.set('v', '<leader>dh', "<Esc><cmd>'<,'>DiffviewFileHistory --follow<CR>", { desc = 'Range history' })
+
+-- Single line history
+vim.keymap.set('n', '<leader>dl', '<cmd>.DiffviewFileHistory --follow<CR>', { desc = 'Line history' })
+
+-- Diff against main/master branch (useful before merging)
+vim.keymap.set('n', '<leader>dm', function()
+  -- Try main first, fall back to master
+  local result = vim.fn.systemlist { 'git', 'rev-parse', '--verify', 'main' }
+  local ok = vim.v.shell_error == 0 and result[1] ~= nil and result[1] ~= ''
+  local branch = ok and 'main' or 'master'
+  vim.cmd('DiffviewOpen ' .. branch)
+end, { desc = 'Diff against main/master' })
+
+-- File history for a commit selected via Telescope
+vim.keymap.set('n', '<leader>dC', function()
+  require('telescope.builtin').git_commits {
+    attach_mappings = function(_, map)
+      map('i', '<CR>', function(prompt_bufnr)
+        local selection = require('telescope.actions.state').get_selected_entry()
+        require('telescope.actions').close(prompt_bufnr)
+        vim.cmd('DiffviewOpen ' .. selection.value .. '^!')
+      end)
+      return true
+    end,
+  }
+end, { desc = 'Diffview commit' })
 
 -- vim: ts=2 sts=2 sw=2 et
