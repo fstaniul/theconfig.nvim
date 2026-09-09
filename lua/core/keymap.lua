@@ -115,6 +115,12 @@ vim.keymap.set('n', '<leader>Gp', function() vim.system({ 'gh', 'pr', 'view', '-
 vim.keymap.set('n', 'gj', require('core.more.test-toggle').toggle, { desc = 'Toggle to test/source file (must exist)' })
 vim.keymap.set('n', 'gJ', require('core.more.test-toggle').toggle_force, { desc = 'Toggle to test/source file (create if missing)' })
 
+vim.api.nvim_create_user_command(
+  'RunTest',
+  function() require('core.more.run-test').run() end,
+  { desc = 'Run the test for the current file and load results into the quickfix list' }
+)
+
 -- Toggle diffview open/close
 vim.keymap.set('n', '<leader>dv', '<cmd>DiffviewToggle<cr>', { desc = 'Toggle Diffview' })
 
