@@ -13,10 +13,15 @@ return {
     opts = {
       enhanced_diff_hl = true,
       diffopt = { algorithm = 'histogram' },
-      merge_tool = {
-        layout = 'diff3_mixed',
-        disable_diagnostics = true,
-        winbar_info = true,
+      view = {
+        default = {
+          layout = 'diff2_horizontal',
+        },
+        merge_tool = {
+          layout = 'diff3_mixed',
+          disable_diagnostics = true,
+          winbar_info = true,
+        },
       },
     },
   },

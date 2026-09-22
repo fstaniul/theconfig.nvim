@@ -193,8 +193,6 @@ return {
         },
       }
 
-      if vim.g.enable_copilot then servers.copilot = {} end
-
       -- Ensure the servers and tools above are installed
       --
       -- To check the current status of installed tools and/or manually install
@@ -294,9 +292,6 @@ return {
         },
         opts = {},
       },
-      vim.g.enable_copilot and {
-        'fang2hou/blink-copilot',
-      } or {},
     },
     ---@module 'blink.cmp'
     ---@type blink.cmp.Config
@@ -343,14 +338,8 @@ return {
       },
 
       sources = {
-        default = { vim.g.enable_copilot and 'copilot' or nil, 'lsp', 'path', 'snippets' },
-        providers = {
-          copilot = {
-            name = 'copilot',
-            module = 'blink-copilot',
-            async = true,
-          },
-        },
+        default = { 'lsp', 'path', 'snippets' },
+        providers = {},
       },
 
       snippets = { preset = 'luasnip' },
