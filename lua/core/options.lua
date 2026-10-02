@@ -4,6 +4,8 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+vim.g.alabaster_floatborder = true
+
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
 
@@ -97,7 +99,13 @@ vim.opt.spell = true
 vim.o.mouse = 'a'
 
 -- Set the filler character (for diffs, default -)
--- vim.opt.fillchars:append { diff = " " }
-vim.opt.fillchars:append { diff = '╱' }
+vim.opt.fillchars:append { diff = ' ' }
+
+-- fold expression
+vim.opt.foldmethod = 'expr'
+vim.opt.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+vim.opt.foldlevel = 99 -- start with everything open
+vim.opt.foldlevelstart = 99
+vim.opt.foldenable = true
 
 -- vim: ts=2 sts=2 sw=2 et
