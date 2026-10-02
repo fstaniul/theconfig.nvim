@@ -133,7 +133,7 @@ return {
           settings = {
             gopls = {
               buildFlags = {
-                '-tags=integration',
+                '-tags=integration,smoke',
               },
             },
           },
