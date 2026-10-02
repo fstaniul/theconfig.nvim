@@ -21,6 +21,7 @@ return {
     filesystem = {
       window = {
         mappings = {
+          ['/'] = 'none',
           ['\\'] = 'close_window',
         },
       },
@@ -37,7 +38,6 @@ return {
         never_show = {
           '.DS_Store',
           'thumbs.db',
-          '.git',
         },
       },
     },
