@@ -6,6 +6,7 @@ return {
   ---@type Gitsigns.Config
   ---@diagnostic disable-next-line: missing-fields
   opts = {
+    current_line_blame = true,
     on_attach = function(bufnr)
       local gitsigns = require 'gitsigns'
 
