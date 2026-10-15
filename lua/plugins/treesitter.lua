@@ -23,6 +23,7 @@ return {
         'typescript',
         'javascript',
         'python',
+        'astro',
       }
       require('nvim-treesitter').install(parsers)
       vim.api.nvim_create_autocmd('FileType', {
