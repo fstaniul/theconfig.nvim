@@ -1,5 +1,6 @@
 return {
   'fstaniul/easy-build.nvim',
+  enabled = false,
   dir = '~/easy-build/',
   ---@module 'easy-build'
   ---@class EasyBuildOpts
